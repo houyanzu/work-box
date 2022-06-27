@@ -4,15 +4,17 @@ import (
 	"github.com/houyanzu/work-box/database"
 )
 
-type PasswordWrongTimes struct {
+type BoxPasswordWrongTimes struct {
 	ID    uint
 	Times uint
 }
 
 type Model struct {
 	*database.MysqlContext
-	Data PasswordWrongTimes
+	Data BoxPasswordWrongTimes
 }
+
+var haveTable = false
 
 func createTable() error {
 	db := database.GetDB()
@@ -20,7 +22,7 @@ func createTable() error {
 	if err != nil {
 		return err
 	}
-	db.Create(&PasswordWrongTimes{1, 0})
+	db.Create(&BoxPasswordWrongTimes{1, 0})
 	return nil
 }
 
@@ -28,16 +30,20 @@ func New(ctx *database.MysqlContext) *Model {
 	if ctx == nil {
 		ctx = database.GetContext()
 	}
-	data := PasswordWrongTimes{}
-	hasTable := ctx.Db.Migrator().HasTable(&data)
-	if !hasTable {
-		err := createTable()
-		if err != nil {
-			panic(err)
+	data := BoxPasswordWrongTimes{}
+	if !haveTable {
+		hasTable := ctx.Db.Migrator().HasTable(&data)
+		if !hasTable {
+			err := createTable()
+			if err != nil {
+				panic(err)
+			}
+			data.ID = 1
+			ctx.Db.Create(&data)
 		}
-		data.ID = 1
-		ctx.Db.Create(&data)
+		haveTable = true
 	}
+
 	return &Model{ctx, data}
 }
 

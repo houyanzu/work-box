@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type TransferRecords struct {
+type BoxTransferRecords struct {
 	ID         uint
 	Type       int8
 	From       string
@@ -19,7 +19,7 @@ type TransferRecords struct {
 
 var haveTable = false
 
-func (c *TransferRecords) BeforeCreate(tx *gorm.DB) error {
+func (c *BoxTransferRecords) BeforeCreate(tx *gorm.DB) error {
 	c.From = strings.ToLower(c.From)
 	c.Status = 1
 	c.CreateTime = mytime.NewFromNow()
@@ -33,8 +33,8 @@ func createTable() error {
 
 type Model struct {
 	*database.MysqlContext
-	Data  TransferRecords
-	List  []TransferRecords
+	Data  BoxTransferRecords
+	List  []BoxTransferRecords
 	Total int64
 }
 
@@ -42,8 +42,8 @@ func New(ctx *database.MysqlContext) *Model {
 	if ctx == nil {
 		ctx = database.GetContext()
 	}
-	list := make([]TransferRecords, 0)
-	data := TransferRecords{}
+	list := make([]BoxTransferRecords, 0)
+	data := BoxTransferRecords{}
 	if !haveTable {
 		hasTable := ctx.Db.Migrator().HasTable(&data)
 		if !hasTable {
@@ -57,7 +57,7 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
-func (m *Model) InitByUserData(data TransferRecords) *Model {
+func (m *Model) InitByUserData(data BoxTransferRecords) *Model {
 	m.Data = data
 	return m
 }

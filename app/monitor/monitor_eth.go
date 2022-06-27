@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/work-box/config"
-	"github.com/houyanzu/work-box/database/chainrecord"
+	"github.com/houyanzu/work-box/database/models/chainrecord"
 	"math/big"
 )
 

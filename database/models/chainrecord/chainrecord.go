@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type MonitorChainRecord struct {
+type BoxMonitorChainRecord struct {
 	ID         uint
 	Contract   string
 	BlockNum   uint64
@@ -18,7 +18,7 @@ type MonitorChainRecord struct {
 
 var haveTable = false
 
-func (c *MonitorChainRecord) BeforeCreate(tx *gorm.DB) error {
+func (c *BoxMonitorChainRecord) BeforeCreate(tx *gorm.DB) error {
 	c.Contract = strings.ToLower(c.Contract)
 	c.CreateTime = mytime.NewFromNow()
 	return nil
@@ -31,8 +31,8 @@ func createTable() error {
 
 type Model struct {
 	*database.MysqlContext
-	Data  MonitorChainRecord
-	List  []MonitorChainRecord
+	Data  BoxMonitorChainRecord
+	List  []BoxMonitorChainRecord
 	Total int64
 }
 
@@ -40,8 +40,8 @@ func New(ctx *database.MysqlContext) *Model {
 	if ctx == nil {
 		ctx = database.GetContext()
 	}
-	list := make([]MonitorChainRecord, 0)
-	data := MonitorChainRecord{}
+	list := make([]BoxMonitorChainRecord, 0)
+	data := BoxMonitorChainRecord{}
 	if !haveTable {
 		hasTable := ctx.Db.Migrator().HasTable(&data)
 		if !hasTable {
@@ -56,7 +56,7 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
-func (m *Model) InitByUserData(data MonitorChainRecord) *Model {
+func (m *Model) InitByUserData(data BoxMonitorChainRecord) *Model {
 	m.Data = data
 	return m
 }
@@ -74,7 +74,7 @@ func (m *Model) Add() {
 
 func GetLastBlockNum(contract string) uint64 {
 	db := database.GetDB()
-	var c MonitorChainRecord
+	var c BoxMonitorChainRecord
 	db.Where("contract = ?", contract).Order("block_num desc").Take(&c)
 	return c.BlockNum
 }

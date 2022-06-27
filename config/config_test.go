@@ -1,7 +1,5 @@
 package config
 
-import "testing"
-
-func TestCreateConfigFile(t *testing.T) {
-	CreateConfigFile()
-}
+//func TestCreateConfigFile(t *testing.T) {
+//	CreateConfigFile()
+//}
