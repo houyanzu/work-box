@@ -111,7 +111,7 @@ func TokenDecimals(token string) (res uint8, err error) {
 	return
 }
 
-func BalanceAt(addr string) (balance decimal.Decimal, err error) {
+func BalanceAt(wallet string) (balance decimal.Decimal, err error) {
 	balance = decimal.Zero
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
@@ -119,7 +119,7 @@ func BalanceAt(addr string) (balance decimal.Decimal, err error) {
 		return
 	}
 
-	account := common.HexToAddress(addr)
+	account := common.HexToAddress(wallet)
 	ba, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		return
