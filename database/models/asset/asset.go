@@ -127,7 +127,7 @@ func (m *Model) Unfreeze(value decimal.Decimal) error {
 }
 
 func (m *Model) UnfreezeAndSubBalance(
-	module,
+	module string,
 	moduleId uint,
 	amount decimal.Decimal,
 	remark string,
