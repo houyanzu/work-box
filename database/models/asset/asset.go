@@ -128,7 +128,6 @@ func (m *Model) Unfreeze(value decimal.Decimal) error {
 
 func (m *Model) UnfreezeAndSubBalance(
 	module,
-	symbol string,
 	moduleId uint,
 	amount decimal.Decimal,
 	remark string,
@@ -152,7 +151,7 @@ func (m *Model) UnfreezeAndSubBalance(
 	assetRecord.Data.Module = module
 	assetRecord.Data.ModuleId = moduleId
 	assetRecord.Data.TokenId = m.Data.TokenId
-	assetRecord.Data.Symbol = symbol
+	assetRecord.Data.Symbol = m.Data.Symbol
 	assetRecord.Data.Amount = amount
 	assetRecord.Data.CreateTime = mytime.NewFromNow()
 	assetRecord.Data.Type = 2
@@ -162,8 +161,7 @@ func (m *Model) UnfreezeAndSubBalance(
 }
 
 func (m *Model) SubBalance(
-	module,
-	symbol string,
+	module string,
 	moduleId uint,
 	amount decimal.Decimal,
 	remark string,
@@ -187,7 +185,7 @@ func (m *Model) SubBalance(
 	assetRecord.Data.Module = module
 	assetRecord.Data.ModuleId = moduleId
 	assetRecord.Data.TokenId = m.Data.TokenId
-	assetRecord.Data.Symbol = symbol
+	assetRecord.Data.Symbol = m.Data.Symbol
 	assetRecord.Data.Amount = amount
 	assetRecord.Data.CreateTime = mytime.NewFromNow()
 	assetRecord.Data.Type = 2
@@ -197,8 +195,7 @@ func (m *Model) SubBalance(
 }
 
 func (m *Model) AddBalance(
-	module,
-	symbol string,
+	module string,
 	moduleId uint,
 	amount decimal.Decimal,
 	remark string,
@@ -219,7 +216,7 @@ func (m *Model) AddBalance(
 	assetRecord.Data.Module = module
 	assetRecord.Data.ModuleId = moduleId
 	assetRecord.Data.TokenId = m.Data.TokenId
-	assetRecord.Data.Symbol = symbol
+	assetRecord.Data.Symbol = m.Data.Symbol
 	assetRecord.Data.Amount = amount
 	assetRecord.Data.Remark = remark
 	assetRecord.Data.CreateTime = mytime.NewFromNow()
