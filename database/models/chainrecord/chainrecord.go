@@ -56,14 +56,14 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
-func (m *Model) InitByUserData(data BoxMonitorChainRecord) *Model {
+func (m *Model) InitByData(data BoxMonitorChainRecord) *Model {
 	m.Data = data
 	return m
 }
 
 func (m *Model) Foreach(f func(index int, m *Model)) {
 	for k, v := range m.List {
-		mm := New(nil).InitByUserData(v)
+		mm := New(nil).InitByData(v)
 		f(k, mm)
 	}
 }

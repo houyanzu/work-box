@@ -87,6 +87,11 @@ func (m *Model) Add() {
 	m.Db.Create(&m.Data)
 }
 
+func (m *Model) InitListByUserId(userId uint) *Model {
+	m.Db.Where("user_id = ?", userId).Find(&m.List)
+	return m
+}
+
 func (m *Model) GetAvailableBalance() decimal.Decimal {
 	return m.Data.Balance.Sub(m.Data.FreezeBalance)
 }
