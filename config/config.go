@@ -1,5 +1,10 @@
 package config
 
+import (
+	"encoding/json"
+	"io/ioutil"
+)
+
 // DB .
 type Config struct {
 	Mysql mysqlConfig `json:"mysql"`
@@ -28,6 +33,9 @@ type redisConfig struct {
 
 type ethConfig struct {
 	Host                  string `json:"host"`
+	WssHost               string `json:"wss_host"`
+	ApiHost               string `json:"api_host"`
+	ApiKey                string `json:"api_key"`
 	ChainId               int64  `json:"chain_id"`
 	MultiTransferContract string `json:"multi_transfer_contract"`
 	LockTransferContract  string `json:"lock_transfer_contract"`
@@ -38,6 +46,19 @@ var internalConfig *Config
 // ParseConfig .
 func ParseConfig(conf *Config) {
 	internalConfig = conf
+}
+
+func ParseConfigByFile(configName string) error {
+	dat, err := ioutil.ReadFile(configName)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(dat, &internalConfig)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetConfig() *Config {
