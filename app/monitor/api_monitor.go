@@ -1,15 +1,14 @@
 package monitor
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/work-box/config"
 	"github.com/houyanzu/work-box/database/models/chainrecord"
 	"github.com/houyanzu/work-box/lib/httptool"
+	"github.com/houyanzu/work-box/tool/eth"
 	"strings"
 	"time"
 )
@@ -21,10 +20,6 @@ type apiLogRes struct {
 func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	contract = strings.ToLower(contract)
 	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
-	if err != nil {
-		return
-	}
 
 	lastBlockNum := chainrecord.GetLastBlockNum(contract)
 	if lastBlockNum == 0 {
@@ -40,11 +35,14 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 			panic("未初始化")
 		}
 	}
-	header, err := client.HeaderByNumber(context.Background(), nil)
+	netLastNum, err := eth.GetApiLastBlockNum()
 	if err != nil {
 		return
 	}
-	netLastNum := header.Number.Uint64()
+	if netLastNum == 0 {
+		err = errors.New("zero")
+		return
+	}
 	endBlockNum := lastBlockNum + blockDiff
 
 	url := conf.Eth.ApiHost +
@@ -62,9 +60,12 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 		return
 	}
 
+	str := strings.ReplaceAll(string(resp), `"logIndex":"0x"`, `"logIndex":"0x0"`)
+	str = strings.ReplaceAll(str, `"transactionIndex":"0x"`, `"transactionIndex":"0x0"`)
 	var logRes apiLogRes
-	err = json.Unmarshal(resp, &logRes)
+	err = json.Unmarshal([]byte(str), &logRes)
 	if err != nil {
+		fmt.Println(url)
 		return
 	}
 	res.logs = logRes.Result

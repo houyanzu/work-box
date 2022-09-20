@@ -183,7 +183,7 @@ func LockTransfer(module string) (err error) {
 		}
 	}
 
-	waitingList := locktransferdetails.New(nil).InitWaitingList(limit)
+	waitingList := locktransferdetails.New(nil).InitWaitingList(limit, module)
 	length := len(waitingList.List)
 	if length == 0 {
 		return

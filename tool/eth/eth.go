@@ -3,20 +3,25 @@ package eth
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/work-box/config"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	"github.com/houyanzu/work-box/lib/contract/unipair"
+	"github.com/houyanzu/work-box/lib/httptool"
 	"github.com/shopspring/decimal"
 	"log"
 	"math/big"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
@@ -57,7 +62,7 @@ func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *e
 	return
 }
 
-func BalanceOf(token, wallet string) (balance decimal.Decimal) {
+func BalanceOf(token, wallet string) (balance decimal.Decimal, err error) {
 	conf := config.GetConfig()
 	balance = decimal.Zero
 	client, err := ethclient.Dial(conf.Eth.Host)
@@ -155,7 +160,7 @@ func TokenDecimals(token string) (res uint8, err error) {
 	return
 }
 
-func BalanceAt(wallet string) (balance decimal.Decimal, err error) {
+func BalanceAt(addr string) (balance decimal.Decimal, err error) {
 	balance = decimal.Zero
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
@@ -163,7 +168,7 @@ func BalanceAt(wallet string) (balance decimal.Decimal, err error) {
 		return
 	}
 
-	account := common.HexToAddress(wallet)
+	account := common.HexToAddress(addr)
 	ba, err := client.BalanceAt(context.Background(), account, nil)
 	if err != nil {
 		return
@@ -192,7 +197,7 @@ func GetTxStatus(hash string) (status uint64, err error) {
 	return
 }
 
-func GetUniPrice(pair, token string, amount *big.Int) (price *big.Int, err error) {
+func GetUniPrice(pair, token string, amount decimal.Decimal) (price decimal.Decimal, err error) {
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
@@ -218,13 +223,17 @@ func GetUniPrice(pair, token string, amount *big.Int) (price *big.Int, err error
 
 	reserves, err := uniPair.GetReserves(nil)
 
+	amountBig := amount.BigInt()
+
 	if tokenStr == token0Str {
-		return quote(amount, reserves.Reserve0, reserves.Reserve1), nil
+		res := quote(amountBig, reserves.Reserve0, reserves.Reserve1)
+		return decimal.NewFromBigInt(res, 0), nil
 	} else if tokenStr == token1Str {
-		return quote(amount, reserves.Reserve1, reserves.Reserve0), nil
+		res := quote(amountBig, reserves.Reserve1, reserves.Reserve0)
+		return decimal.NewFromBigInt(res, 0), nil
 	}
 
-	return nil, errors.New("wrong token")
+	return decimal.Zero, errors.New("wrong token")
 }
 
 func IsAddress(addr string) bool {
@@ -242,7 +251,7 @@ func IsContract(addr string) (res bool, err error) {
 		return
 	}
 	address := common.HexToAddress(addr)
-	bytecode, err := client.CodeAt(context.Background(), address, nil) // nil is latest block
+	bytecode, err := client.CodeAt(context.Background(), address, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -272,6 +281,54 @@ func GetGasFeeByHash(hash string) (decimal.Decimal, error) {
 	gasUsed, _ := decimal.NewFromString(fmt.Sprintf("%d", gasUsedInt))
 	gasFee := gasPrice.Mul(gasUsed)
 	return gasFee, nil
+}
+
+func GetApiLastBlockNum() (num uint64, err error) {
+	var res struct {
+		Status string `json:"status"`
+		Result string `json:"result"`
+	}
+	conf := config.GetConfig()
+	now := time.Now().Unix() - 5
+	url := conf.Eth.ApiHost +
+		"?module=block&action=getblocknobytime" +
+		"&timestamp=" + fmt.Sprintf("%d", now) +
+		"&closest=before" +
+		"&apikey=" + conf.Eth.ApiKey
+	resp, code, err := httptool.Get(url, 20*time.Second)
+	if err != nil {
+		return
+	}
+	if code != 200 {
+		err = errors.New(string(resp))
+		return
+	}
+	err = json.Unmarshal(resp, &res)
+	if err != nil {
+		return
+	}
+
+	return strconv.ParseUint(res.Result, 10, 64)
+}
+
+func CreateAddress() (address, privateKeyString string, err error) {
+	privateKey, _ := crypto.GenerateKey()
+	if err != nil {
+		return
+	}
+
+	privateKeyBytes := crypto.FromECDSA(privateKey)
+	privateKeyString = hexutil.Encode(privateKeyBytes)[2:]
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		err = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+
+	address = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	return
 }
 
 func quote(amountA, reserveA, reserveB *big.Int) *big.Int {
