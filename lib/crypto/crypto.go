@@ -8,6 +8,18 @@ import (
 	"io"
 )
 
+type Decoder interface {
+	Decode(key []byte) Encoder
+	ToBytes() []byte
+	SetBytes(data []byte) Decoder
+}
+
+type Encoder interface {
+	Encode(key []byte) Decoder
+	ToString() string
+	SetString(data string) Encoder
+}
+
 func Sha1Str(text string) string {
 	t := sha1.New()
 	_, _ = io.WriteString(t, text)

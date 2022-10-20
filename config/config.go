@@ -34,6 +34,7 @@ type redisConfig struct {
 
 type ethConfig struct {
 	Host                  string `json:"host"`
+	WssHost               string `json:"wss_host"`
 	ApiHost               string `json:"api_host"`
 	ApiKey                string `json:"api_key"`
 	ChainId               int64  `json:"chain_id"`
