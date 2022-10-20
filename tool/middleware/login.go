@@ -125,3 +125,10 @@ func adminLoginHandler(c *gin.Context) {
 	c.Next()
 	return
 }
+
+func GetUserId(c *gin.Context) uint {
+	userIdInterface, _ := c.Get("userId")
+	userIdInt, _ := userIdInterface.(int64)
+	userId := uint(userIdInt)
+	return userId
+}
