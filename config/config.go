@@ -44,6 +44,7 @@ type ethConfig struct {
 
 type extra struct {
 	DingTalkURL string `json:"ding_talk_url"`
+	LoginExTime int64  `json:"login_ex_time"`
 }
 
 var internalConfig *Config

@@ -1,10 +1,15 @@
 package middleware
 
 import (
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/houyanzu/work-box/config"
+	"github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/tool/cache"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func Login() gin.HandlerFunc {
@@ -123,6 +128,40 @@ func adminLoginHandler(c *gin.Context) {
 
 	c.Set("userId", userId)
 	c.Next()
+	return
+}
+
+func GetLoginToken(userID uint, address string, alone bool) (token string, err error) {
+	switchKey := fmt.Sprintf("%dlogin", userID)
+	oldToken, err := cache.GetString(switchKey)
+	if err != nil {
+		return
+	}
+	if oldToken != "" && alone {
+		cache.Delete(oldToken)
+	}
+
+	had := true
+	for i := 0; i < 5; i++ {
+		token = crypto.Sha1Str(time.Now().Format(time.RFC3339) + fmt.Sprintf("%d", userID))
+		t, _ := cache.GetString(token)
+		if t == "" {
+			had = false
+			break
+		}
+	}
+	if had {
+		err = errors.New("had")
+		return
+	}
+
+	conf := config.GetConfig()
+	if alone {
+		cache.Set(switchKey, token, conf.Extra.LoginExTime)
+	}
+
+	cache.Set(token, userID, conf.Extra.LoginExTime)
+	cache.Set(token+"_address", strings.ToLower(address), conf.Extra.LoginExTime)
 	return
 }
 
