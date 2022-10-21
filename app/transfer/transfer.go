@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/work-box/config"
+	"github.com/houyanzu/work-box/database/models/keys"
 	"github.com/houyanzu/work-box/database/models/locktransferdetails"
 	"github.com/houyanzu/work-box/database/models/pwdwt"
 	"github.com/houyanzu/work-box/database/models/transferdetails"
@@ -17,6 +18,7 @@ import (
 	"github.com/houyanzu/work-box/lib/contract/locktransfer"
 	"github.com/houyanzu/work-box/lib/contract/multitransfer"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
+	crypto2 "github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/lib/crypto/aes"
 	"github.com/houyanzu/work-box/tool/eth"
 	"math/big"
@@ -41,6 +43,43 @@ func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	}
 	privateKeyByte := priKeyCt.Decode(password)
 	privateKeyStr = privateKeyByte.ToString()
+	pwdwt.New(nil).ResetTimes()
+
+	privateKey, e := crypto.HexToECDSA(privateKeyStr)
+	if e != nil {
+		return
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		e = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	return
+}
+
+func InitDBTrans(priKeyID uint, password []byte, de crypto2.Decoder) (e error) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			pwdwt.New(nil).Wrong()
+			e = errors.New("wrong password")
+			return
+		}
+	}()
+	times := pwdwt.New(nil).GetTimes()
+	if times >= 5 {
+		e = errors.New("locked")
+		return
+	}
+	priKeyModel := keys.New(nil).InitByID(priKeyID)
+	if priKeyModel.Data.ID == 0 {
+		e = errors.New("priKey not exists")
+		return
+	}
+	privateKeyStr = priKeyModel.GetPriKey(string(password), de)
 	pwdwt.New(nil).ResetTimes()
 
 	privateKey, e := crypto.HexToECDSA(privateKeyStr)
