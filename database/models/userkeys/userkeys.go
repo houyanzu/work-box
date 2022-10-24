@@ -70,24 +70,45 @@ func (m *Model) Add() {
 	m.Db.Create(&m.Data)
 }
 
-func (m *Model) CreateKey(password []byte, en crypto.Encoder, de crypto.Decoder) (*Model, error) {
-	addr, priKey, err := eth.CreateAddress()
-	if err != nil {
-		return nil, err
-	}
+func (m *Model) Exists() bool {
+	return m.Data.ID > 0
+}
 
+func (m *Model) CreateKeys(count int, password []byte, en crypto.Encoder, de crypto.Decoder) error {
 	passModel := passwords.New(nil).InitByModule("USER_KEY")
 	if !passModel.Exists() {
 		passModel.Create("USER_KEY", password, en)
 	}
 	pass := passModel.GetPassword(password, de)
 
-	en.SetString(priKey)
-	dec := en.Encode(pass)
-	m.Data.Address = strings.ToLower(addr)
-	m.Data.PrivateKey = dec
-	m.Add()
-	return m, nil
+	for i := 0; i < count; i++ {
+		addr, priKey, err := eth.CreateAddress()
+		if err != nil {
+			return err
+		}
+		en.SetString(priKey)
+		dec := en.Encode(pass)
+		m.Data.ID = 0
+		m.Data.Address = strings.ToLower(addr)
+		m.Data.PrivateKey = dec
+		m.Add()
+	}
+
+	return nil
+}
+
+func (m *Model) OfferKey(userID uint) *Model {
+	m.Db.Where("user_id = ?", userID).Take(&m.Data)
+	if m.Exists() {
+		return m
+	}
+	m.Db.Where("user_id = 0").Order("id asc").Take(&m.Data)
+	rows := m.Db.Where("id = ? AND user_id = 0").Update("user_id", userID).RowsAffected
+	if rows == 1 {
+		m.Data.UserID = userID
+		return m
+	}
+	return New(nil)
 }
 
 func (m *Model) GetPriKey(password []byte, de crypto.Decoder) (priKey string) {
@@ -104,6 +125,11 @@ func (m *Model) GetPriKey(password []byte, de crypto.Decoder) (priKey string) {
 
 func (m *Model) InitByAddress(address string) *Model {
 	m.Db.Where("address = ?", strings.ToLower(address)).Take(&m.Data)
+	return m
+}
+
+func (m *Model) InitByUserID(userID uint) *Model {
+	m.Db.Where("user_id = ?", userID).Take(&m.Data)
 	return m
 }
 
