@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/shopspring/decimal"
 	"io/ioutil"
 )
 
@@ -43,8 +44,9 @@ type ethConfig struct {
 }
 
 type extra struct {
-	DingTalkURL string `json:"ding_talk_url"`
-	LoginExTime int64  `json:"login_ex_time"`
+	DingTalkURL      string          `json:"ding_talk_url"`
+	LoginExTime      int64           `json:"login_ex_time"`
+	UserKeyFeeAmount decimal.Decimal `json:"user_key_fee_amount"`
 }
 
 var internalConfig *Config

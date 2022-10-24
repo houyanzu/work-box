@@ -80,6 +80,11 @@ func (m *Model) InitPending(from string, module string) *Model {
 	return m
 }
 
+func (m *Model) InitByID(ID uint) *Model {
+	m.Db.Take(&m.Data, ID)
+	return m
+}
+
 func (m *Model) SetSuccess() bool {
 	m.Error = m.Db.Model(&m.Data).Updates(map[string]any{
 		"status": 2,
@@ -92,4 +97,8 @@ func (m *Model) SetFail() bool {
 		"status": -1,
 	}).Error
 	return true
+}
+
+func (m *Model) Exists() bool {
+	return m.Data.ID > 0
 }

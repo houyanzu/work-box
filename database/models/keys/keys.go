@@ -30,7 +30,7 @@ var haveTable = false
 
 func createTable() error {
 	db := database.GetDB()
-	sql := "CREATE TABLE `box_keys` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`address` char(42) NOT NULL,\n\t`pri_key` varbinary(255) NOT NULL,\n\t`remark` varchar(64) NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8;"
+	sql := "CREATE TABLE `box_keys` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`address` char(42) NOT NULL,\n\t`pri_key` varbinary(255) NULL,\n\t`remark` varchar(64) NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8;"
 	return db.Exec(sql).Error
 }
 
@@ -67,10 +67,10 @@ func (m *Model) CreateKey(password, remark string, en crypto.Encoder) (*Model, e
 		return nil, err
 	}
 
-	en = en.SetString(priKey)
+	en.SetString(priKey)
 	de := en.Encode([]byte(password))
 	m.Data.Address = strings.ToLower(addr)
-	m.Data.PriKey = de.ToBytes()
+	m.Data.PriKey = de
 	m.Data.Remark = remark
 	m.Add()
 	return m, nil
@@ -85,8 +85,8 @@ func (m *Model) InitByID(ID uint) *Model {
 	return m
 }
 
-func (m *Model) GetPriKey(password string, de crypto.Decoder) (priKey string) {
-	de = de.SetBytes(m.Data.PriKey)
-	en := de.Decode([]byte(password))
-	return en.ToString()
+func (m *Model) GetPriKey(password []byte, de crypto.Decoder) (priKey string) {
+	de.SetBytes(m.Data.PriKey)
+	en := de.Decode(password)
+	return en
 }

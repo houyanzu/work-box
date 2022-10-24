@@ -24,6 +24,11 @@ import (
 	"time"
 )
 
+const (
+	EthAddress  = "0x0000000000000000000000000000000000000000"
+	DeadAddress = "0x000000000000000000000000000000000000dEaD"
+)
+
 func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
 	conf := config.GetConfig()
 	client, err = ethclient.Dial(conf.Eth.Host)

@@ -3,25 +3,32 @@ package crypto
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
 )
 
 type Decoder interface {
-	Decode(key []byte) Encoder
+	Decode(key []byte) string
 	ToBytes() []byte
-	SetBytes(data []byte) Decoder
+	SetBytes(data []byte)
 }
 
 type Encoder interface {
-	Encode(key []byte) Decoder
+	Encode(key []byte) []byte
 	ToString() string
-	SetString(data string) Encoder
+	SetString(data string)
 }
 
 func Sha1Str(text string) string {
 	t := sha1.New()
+	_, _ = io.WriteString(t, text)
+	return fmt.Sprintf("%x", t.Sum(nil))
+}
+
+func Sha256Str(text string) string {
+	t := sha256.New()
 	_, _ = io.WriteString(t, text)
 	return fmt.Sprintf("%x", t.Sum(nil))
 }

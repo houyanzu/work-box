@@ -26,6 +26,7 @@ import (
 
 var privateKeyStr string
 var FromAddress string
+var GasLimit = uint64(150000)
 
 func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	defer func() {
@@ -79,7 +80,7 @@ func InitDBTrans(priKeyID uint, password []byte, de crypto2.Decoder) (e error) {
 		e = errors.New("priKey not exists")
 		return
 	}
-	privateKeyStr = priKeyModel.GetPriKey(string(password), de)
+	privateKeyStr = priKeyModel.GetPriKey(password, de)
 	pwdwt.New(nil).ResetTimes()
 
 	privateKey, e := crypto.HexToECDSA(privateKeyStr)
@@ -100,7 +101,7 @@ func InitDBTrans(priKeyID uint, password []byte, de crypto2.Decoder) (e error) {
 func Transfer(limit int, module string) (err error) {
 	conf := config.GetConfig()
 	pending := transferrecords.New(nil).InitPending(FromAddress, module)
-	if pending.Data.ID > 0 {
+	if pending.Exists() {
 		var status uint64
 		status, err = eth.GetTxStatus(pending.Data.Hash)
 		if err != nil {
@@ -167,8 +168,8 @@ func Transfer(limit int, module string) (err error) {
 		return
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = totalValue         // in wei
-	auth.GasLimit = uint64(2000000) // in units
+	auth.Value = totalValue  // in wei
+	auth.GasLimit = GasLimit // in units
 	auth.GasPrice = gasPrice
 
 	multiCon := common.HexToAddress(conf.Eth.MultiTransferContract)
@@ -253,8 +254,8 @@ func LockTransfer(module string) (err error) {
 		return
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(250000) // in units
+	auth.Value = big.NewInt(0) // in wei
+	auth.GasLimit = GasLimit   // in units
 	auth.GasPrice = gasPrice
 
 	ltCon := common.HexToAddress(conf.Eth.LockTransferContract)
@@ -287,14 +288,17 @@ func LockTransfer(module string) (err error) {
 	return
 }
 
-func SingleTransfer(token string, to string, amount *big.Int) (hash string, err error) {
+func SingleTransfer(token string, to string, amount *big.Int, priKey string) (hash string, nonce uint64, err error) {
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
 		return
 	}
 
-	privateKey, err := crypto.HexToECDSA(privateKeyStr)
+	if priKey == "" {
+		priKey = privateKeyStr
+	}
+	privateKey, err := crypto.HexToECDSA(priKey)
 	if err != nil {
 		return
 	}
@@ -304,7 +308,7 @@ func SingleTransfer(token string, to string, amount *big.Int) (hash string, err 
 		return
 	}
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	nonce, err := client.NonceAt(context.Background(), fromAddress, nil)
+	nonce, err = client.NonceAt(context.Background(), fromAddress, nil)
 	if err != nil {
 		return
 	}
@@ -343,8 +347,8 @@ func SingleTransfer(token string, to string, amount *big.Int) (hash string, err 
 		return
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(150000) // in units
+	auth.Value = big.NewInt(0) // in wei
+	auth.GasLimit = GasLimit   // in units
 	auth.GasPrice = gasPrice
 
 	tokenCon := common.HexToAddress(token)
