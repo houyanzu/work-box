@@ -84,6 +84,11 @@ func (m *Model) InitListByBalance(tokenID uint, balance decimal.Decimal) *Model 
 	return m
 }
 
+func (m *Model) InitById(id uint) *Model {
+	m.Db.Take(&m.Data, id)
+	return m
+}
+
 func (m *Model) InitByData(data BoxUserKeysBalance) *Model {
 	m.Data = data
 	return m

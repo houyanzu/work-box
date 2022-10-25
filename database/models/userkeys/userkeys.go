@@ -35,7 +35,7 @@ var haveTable = false
 
 func createTable() error {
 	db := database.GetDB()
-	sql := "CREATE TABLE `box_user_keys` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`user_id` int(11) UNSIGNED NOT NULL,\n\t`address` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`private_key` varbinary(255) NOT NULL,\n\t`eth_balance` decimal(32,0)  NOT NULL,\n\t`status` tinyint(1) NOT NULL COMMENT '0-正常，1-待转eth，2-转eth中',\n\t`collect_status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0-正常，1-归集中',\n\t`transfer_detail_id` int(11) UNSIGNED NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tUnique KEY `u`(`user_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
+	sql := "CREATE TABLE `box_user_keys` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`user_id` int(11) UNSIGNED NOT NULL,\n\t`address` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`private_key` varbinary(255) NOT NULL,\n\t`eth_balance` decimal(32,0)  NOT NULL,\n\t`status` tinyint(1) NOT NULL COMMENT '0-正常，1-待转eth，2-转eth中',\n\t`collect_status` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '0-正常，1-归集中',\n\t`transfer_detail_id` int(11) UNSIGNED NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `address`(`address`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
 	return db.Exec(sql).Error
 }
 

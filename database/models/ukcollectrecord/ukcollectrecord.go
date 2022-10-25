@@ -3,6 +3,7 @@ package ukcollectrecord
 import (
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/lib/mytime"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -10,6 +11,8 @@ type BoxUkCollectRecord struct {
 	ID         uint            `json:"id" gorm:"column:id"`
 	KeyID      uint            `json:"key_id" gorm:"column:key_id"`
 	Hash       string          `json:"hash" gorm:"column:hash"`
+	BalanceID  uint            `json:"balance_id" gorm:"column:balance_id"`
+	Amount     decimal.Decimal `json:"amount" gorm:"column:amount"`
 	Status     int8            `json:"status" gorm:"column:status"`
 	Nonce      uint64          `json:"nonce" gorm:"column:nonce"`
 	CreateTime mytime.DateTime `json:"create_time" gorm:"column:create_time"`
@@ -28,7 +31,7 @@ var haveTable = false
 
 func createTable() error {
 	db := database.GetDB()
-	sql := "CREATE TABLE `box_uk_collect_record` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`key_id` int(11) UNSIGNED NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`status` tinyint(1) NOT NULL,\n\t`nonce` int(11) UNSIGNED NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
+	sql := "CREATE TABLE `box_uk_collect_record` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`key_id` int(11) UNSIGNED NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`balance_id` int(11) UNSIGNED NOT NULL,\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL,\n\t`status` tinyint(1) NOT NULL,\n\t`nonce` int(11) UNSIGNED NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
 	return db.Exec(sql).Error
 }
 
