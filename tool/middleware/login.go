@@ -133,14 +133,12 @@ func adminLoginHandler(c *gin.Context) {
 
 func GetLoginToken(userID uint, address string, alone bool) (token string, err error) {
 	switchKey := fmt.Sprintf("%dlogin", userID)
-	oldToken := cache.Get(switchKey)
-	oldTokenStr, ok := oldToken.(string)
-	if !ok {
-		err = errors.New("wrong")
-		return
-	}
+	oldToken, _ := cache.GetString(switchKey)
+	//if err != nil {
+	//	return
+	//}
 	if oldToken != "" && alone {
-		cache.Delete(oldTokenStr)
+		cache.Delete(oldToken)
 	}
 
 	had := true
