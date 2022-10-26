@@ -44,9 +44,9 @@ type ethConfig struct {
 }
 
 type extra struct {
-	DingTalkURL      string          `json:"ding_talk_url"`
-	LoginExTime      int64           `json:"login_ex_time"`
-	UserKeyFeeAmount decimal.Decimal `json:"user_key_fee_amount"`
+	DingTalkURL       string          `json:"ding_talk_url"`
+	LoginExTime       int64           `json:"login_ex_time"`
+	UserKeyFeedAmount decimal.Decimal `json:"user_key_feed_amount"`
 }
 
 var internalConfig *Config

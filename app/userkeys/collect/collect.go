@@ -30,7 +30,7 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 			status, err := eth.GetTxStatus(collectRecord.Data.Hash)
 			if err != nil {
 				fmt.Println("GetTxStatus err:", err, uk.Data.ID)
-				return
+				return err
 			}
 			if status == 1 {
 				collectRecord.SetSuccess()
@@ -39,7 +39,7 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 			}
 			uk.SetCollectFinish()
 			ukb.UpdateBalance()
-			return
+			return nil
 		}
 	}
 	balance, err := eth.BalanceAt(uk.Data.Address)
@@ -47,7 +47,7 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 		return
 	}
 	conf := config.GetConfig()
-	if balance.LessThan(conf.Extra.UserKeyFeeAmount) {
+	if balance.LessThan(conf.Extra.UserKeyFeedAmount) {
 		uk.SetWaitFeed()
 		return
 	}

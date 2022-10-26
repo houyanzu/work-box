@@ -35,7 +35,7 @@ func Feed(wg *sync.WaitGroup) {
 		transferDetail.Data.Module = TransferModule
 		transferDetail.Data.Token = eth.EthAddress
 		transferDetail.Data.To = userKey.Data.Address
-		transferDetail.Data.Amount = conf.Extra.UserKeyFeeAmount
+		transferDetail.Data.Amount = conf.Extra.UserKeyFeedAmount
 		transferDetail.Add()
 
 		userKey.SetFeeding(transferDetail.Data.ID)
