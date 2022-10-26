@@ -8,6 +8,7 @@ import (
 	"github.com/houyanzu/work-box/tool/eth"
 	"gorm.io/gorm"
 	"strings"
+	"sync"
 )
 
 type BoxUserKeys struct {
@@ -44,6 +45,7 @@ type Model struct {
 	Data  BoxUserKeys
 	List  []BoxUserKeys
 	Total int64
+	mu    sync.Mutex
 }
 
 func New(ctx *database.MysqlContext) *Model {
@@ -63,7 +65,7 @@ func New(ctx *database.MysqlContext) *Model {
 		haveTable = true
 	}
 
-	return &Model{ctx, data, list, 0}
+	return &Model{ctx, data, list, 0, sync.Mutex{}}
 }
 
 func (m *Model) Add() {
@@ -98,6 +100,8 @@ func (m *Model) CreateKeys(count int, password []byte, en crypto.Encoder, de cry
 }
 
 func (m *Model) OfferKey(userID uint) *Model {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.Db.Where("user_id = ?", userID).Take(&m.Data)
 	if m.Exists() {
 		return m
