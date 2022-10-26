@@ -107,7 +107,7 @@ func (m *Model) OfferKey(userID uint) *Model {
 		return m
 	}
 	m.Db.Where("user_id = 0").Order("id asc").Take(&m.Data)
-	rows := m.Db.Where("id = ? AND user_id = 0", m.Data.ID).Update("user_id", userID).RowsAffected
+	rows := m.Db.Model(&m.Data).Where("`user_id` = 0").Update("user_id", userID).RowsAffected
 	if rows == 1 {
 		m.Data.UserID = userID
 		return m
