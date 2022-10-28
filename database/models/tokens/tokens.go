@@ -68,3 +68,15 @@ func (m *Model) Add() {
 func (m *Model) Save() {
 	m.Db.Save(&m.Data)
 }
+
+func (m *Model) InitByData(data BoxTokens) *Model {
+	m.Data = data
+	return m
+}
+
+func (m *Model) Foreach(f func(index int, m *Model)) {
+	for k, v := range m.List {
+		mm := m.InitByData(v)
+		f(k, mm)
+	}
+}

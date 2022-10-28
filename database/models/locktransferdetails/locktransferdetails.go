@@ -64,6 +64,15 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
+func (m *Model) InitByID(ID uint) *Model {
+	m.Db.Take(&m.Data, ID)
+	return m
+}
+
+func (m *Model) Exists() bool {
+	return m.Data.ID > 0
+}
+
 func (m *Model) InitByData(data BoxLockTransferDetails) *Model {
 	m.Data = data
 	return m

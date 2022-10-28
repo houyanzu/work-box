@@ -62,3 +62,13 @@ func New(ctx *database.MysqlContext) *Model {
 func (m *Model) Add() {
 	m.Db.Create(&m.Data)
 }
+
+func (m *Model) InitByData(data BoxAssetRecord) *Model {
+	m.Data = data
+	return m
+}
+
+func (m *Model) InitByID(ID uint) *Model {
+	m.Db.Take(&m.Data, ID)
+	return m
+}

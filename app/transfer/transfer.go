@@ -26,7 +26,7 @@ import (
 
 var privateKeyStr string
 var FromAddress string
-var GasLimit = uint64(150000)
+var GasLimit = uint64(100000)
 
 func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	defer func() {
@@ -168,8 +168,8 @@ func Transfer(limit int, module string) (err error) {
 		return
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = totalValue  // in wei
-	auth.GasLimit = GasLimit // in units
+	auth.Value = totalValue                                  // in wei
+	auth.GasLimit = GasLimit * uint64(len(waitingList.List)) // in units
 	auth.GasPrice = gasPrice
 
 	multiCon := common.HexToAddress(conf.Eth.MultiTransferContract)

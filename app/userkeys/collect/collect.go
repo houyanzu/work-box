@@ -2,7 +2,6 @@ package collect
 
 import (
 	"errors"
-	"fmt"
 	"github.com/houyanzu/work-box/app/transfer"
 	"github.com/houyanzu/work-box/config"
 	"github.com/houyanzu/work-box/database/models/keys"
@@ -29,7 +28,6 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 		if collectRecord.Exists() {
 			status, err := eth.GetTxStatus(collectRecord.Data.Hash)
 			if err != nil {
-				fmt.Println("GetTxStatus err:", err, uk.Data.ID)
 				return err
 			}
 			if status == 1 {
@@ -62,7 +60,7 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 	amount := ukb.Data.Balance
 	hash, nonce, err := transfer.SingleTransfer(token.Data.Contract, toKey.Data.Address, amount.BigInt(), uk.GetPriKey(password, de))
 	if err != nil {
-		return err
+		return
 	}
 
 	cr := ukcollectrecord.New(nil)
@@ -70,7 +68,11 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 	cr.Data.Hash = hash
 	cr.Data.Status = 1
 	cr.Data.Nonce = nonce
+	cr.Data.Amount = amount
+	cr.Data.BalanceID = ukb.Data.ID
 	cr.Add()
+
+	uk.SetCollecting(cr.Data.ID)
 
 	return
 }

@@ -82,3 +82,20 @@ func (m *Model) SetSuccess() {
 func (m *Model) SetFail() {
 	m.Db.Model(&m.Data).Update("status", -1)
 }
+
+func (m *Model) InitByID(ID uint) *Model {
+	m.Db.Take(&m.Data, ID)
+	return m
+}
+
+func (m *Model) InitByData(data BoxUkCollectRecord) *Model {
+	m.Data = data
+	return m
+}
+
+func (m *Model) Foreach(f func(index int, m *Model)) {
+	for k, v := range m.List {
+		mm := m.InitByData(v)
+		f(k, mm)
+	}
+}
