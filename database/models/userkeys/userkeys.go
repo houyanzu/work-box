@@ -147,16 +147,6 @@ func (m *Model) InitByData(data BoxUserKeys) *Model {
 	return m
 }
 
-func (m *Model) InitWaitingList() *Model {
-	m.Db.Where("status = 1").Find(&m.List)
-	return m
-}
-
-func (m *Model) InitFeedingList() *Model {
-	m.Db.Where("status = 2").Find(&m.List)
-	return m
-}
-
 func (m *Model) ListEmpty() bool {
 	return len(m.List) == 0
 }
@@ -166,30 +156,4 @@ func (m *Model) Foreach(f func(index int, m *Model)) {
 		mm := New(nil).InitByData(v)
 		f(k, mm)
 	}
-}
-
-func (m *Model) SetWaitFeed() {
-	m.Db.Model(&m.Data).Update("status", 1)
-}
-
-func (m *Model) SetFeeding(id uint) {
-	m.Db.Model(&m.Data).Updates(map[string]any{
-		"status":             2,
-		"transfer_detail_id": id,
-	})
-}
-
-func (m *Model) SetFeedFinish() {
-	m.Db.Model(&m.Data).Update("status", 0)
-}
-
-func (m *Model) SetCollecting(id uint) {
-	m.Db.Model(&m.Data).Updates(map[string]any{
-		"collect_status":     1,
-		"transfer_detail_id": id,
-	})
-}
-
-func (m *Model) SetCollectFinish() {
-	m.Db.Model(&m.Data).Update("collect_status", 0)
 }

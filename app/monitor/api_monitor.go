@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/houyanzu/work-box/config"
 	"github.com/houyanzu/work-box/database/models/chainrecord"
+	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/lib/httptool"
 	"github.com/houyanzu/work-box/tool/eth"
 	"strings"
@@ -17,11 +17,16 @@ type apiLogRes struct {
 	Result []types.Log
 }
 
-func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
+func ApiMonitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, err error) {
 	contract = strings.ToLower(contract)
-	conf := config.GetConfig()
 
-	lastBlockNum := chainrecord.GetLastBlockNum(contract)
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+
+	lastBlockNum := chainrecord.GetLastBlockNum(chainDBID, contract)
 	if lastBlockNum == 0 {
 		var ok bool
 		if lastBlockNum, ok = initBlock[contract]; ok {
@@ -30,12 +35,13 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 			record.Data.BlockNum = lastBlockNum
 			record.Data.EventId = ""
 			record.Data.Hash = ""
+			record.Data.ChainDbId = chainDBID
 			record.Add()
 		} else {
 			panic("未初始化")
 		}
 	}
-	netLastNum, err := eth.GetApiLastBlockNum()
+	netLastNum, err := eth.GetApiLastBlockNum(chainDBID)
 	if err != nil {
 		return
 	}
@@ -45,12 +51,12 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	}
 	endBlockNum := lastBlockNum + blockDiff
 
-	url := conf.Eth.ApiHost +
+	url := chain.Data.ApiHost +
 		"?module=logs&action=getLogs" +
 		"&fromBlock=" + fmt.Sprintf("%d", lastBlockNum+1) +
 		"&toBlock=" + fmt.Sprintf("%d", endBlockNum) +
 		"&address=" + contract +
-		"&apikey=" + conf.Eth.ApiKey
+		"&apikey=" + chain.Data.ApiKey
 	resp, code, err := httptool.Get(url, 20*time.Second)
 	if err != nil {
 		return
@@ -72,5 +78,6 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	res.netLastNum = netLastNum
 	res.endBlockNum = endBlockNum
 	res.contract = contract
+	res.ChainDBID = chainDBID
 	return
 }

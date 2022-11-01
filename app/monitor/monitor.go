@@ -2,17 +2,19 @@ package monitor
 
 import (
 	"context"
+	"errors"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/houyanzu/work-box/config"
 	"github.com/houyanzu/work-box/database/models/chainrecord"
+	"github.com/houyanzu/work-box/database/models/chains"
 	"math/big"
 	"strings"
 )
 
 type EventLog struct {
+	ChainDBID   uint
 	logs        []types.Log
 	netLastNum  uint64
 	endBlockNum uint64
@@ -26,15 +28,19 @@ func InitBlockNum(contract string, blockNum uint64) {
 	initBlock[contract] = blockNum
 }
 
-func Monitor(contract string, blockDiff uint64) (res EventLog, err error) {
+func Monitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, err error) {
 	contract = strings.ToLower(contract)
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
 
-	lastBlockNum := chainrecord.GetLastBlockNum(contract)
+	lastBlockNum := chainrecord.GetLastBlockNum(chainDBID, contract)
 	if lastBlockNum == 0 {
 		var ok bool
 		if lastBlockNum, ok = initBlock[contract]; ok {
@@ -72,6 +78,7 @@ func Monitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	res.netLastNum = netLastNum
 	res.endBlockNum = endBlockNum
 	res.contract = contract
+	res.ChainDBID = chainDBID
 	return
 }
 
@@ -84,6 +91,7 @@ func (e EventLog) Foreach(f func(index int, log types.Log, chainRecordId uint)) 
 		record.Data.BlockNum = blockNum
 		record.Data.EventId = v.Topics[0].Hex()
 		record.Data.Hash = hash
+		record.Data.ChainDbId = e.ChainDBID
 		record.Add()
 		f(k, v, record.Data.ID)
 	}
@@ -91,6 +99,7 @@ func (e EventLog) Foreach(f func(index int, log types.Log, chainRecordId uint)) 
 		record := chainrecord.New(nil)
 		record.Data.Contract = e.contract
 		record.Data.BlockNum = e.endBlockNum
+		record.Data.ChainDbId = e.ChainDBID
 		record.Add()
 	}
 }

@@ -2,15 +2,18 @@ package monitor
 
 import (
 	"context"
+	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/houyanzu/work-box/config"
 	"github.com/houyanzu/work-box/database/models/chainrecord"
+	"github.com/houyanzu/work-box/database/models/chains"
+	"github.com/houyanzu/work-box/tool/eth"
 	"math/big"
 )
 
 type EthLog struct {
+	ChainDBID   uint
 	logs        []transferLog
 	netLastNum  uint64
 	endBlockNum uint64
@@ -25,15 +28,19 @@ type transferLog struct {
 	Amount      *big.Int
 }
 
-func MonitorEth(blockDiff uint64) (res EthLog, err error) {
-	contract := "0x0000000000000000000000000000000000000000"
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func MonitorEth(chainDBID uint, blockDiff uint64) (res EthLog, err error) {
+	contract := eth.EthAddress
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
 
-	lastBlockNum := chainrecord.GetLastBlockNum(contract)
+	lastBlockNum := chainrecord.GetLastBlockNum(chainDBID, contract)
 	if lastBlockNum == 0 {
 		var ok bool
 		if lastBlockNum, ok = initBlock[contract]; ok {
@@ -66,7 +73,7 @@ func MonitorEth(blockDiff uint64) (res EthLog, err error) {
 			}
 		}
 		for _, tx := range block.Transactions() {
-			msg, _ := tx.AsMessage(types.NewEIP155Signer(big.NewInt(conf.Eth.ChainId)), nil)
+			msg, _ := tx.AsMessage(types.NewEIP155Signer(big.NewInt(chain.Data.ChainID)), nil)
 			logs = append(logs, transferLog{tx.Hash(), i, msg.From(), *tx.To(), tx.Value()})
 		}
 	}
@@ -75,6 +82,7 @@ func MonitorEth(blockDiff uint64) (res EthLog, err error) {
 	res.netLastNum = netLastNum
 	res.endBlockNum = endBlockNum
 	res.contract = contract
+	res.ChainDBID = chainDBID
 	return
 }
 
@@ -87,6 +95,7 @@ func (e EthLog) Foreach(f func(index int, log transferLog)) {
 		record.Data.BlockNum = blockNum
 		record.Data.EventId = ""
 		record.Data.Hash = hash
+		record.Data.ChainDbId = e.ChainDBID
 		record.Add()
 		f(k, v)
 	}
@@ -94,6 +103,7 @@ func (e EthLog) Foreach(f func(index int, log transferLog)) {
 		record := chainrecord.New(nil)
 		record.Data.Contract = e.contract
 		record.Data.BlockNum = e.endBlockNum
+		record.Data.ChainDbId = e.ChainDBID
 		record.Add()
 	}
 }

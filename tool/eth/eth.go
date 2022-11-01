@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/houyanzu/work-box/config"
+	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	"github.com/houyanzu/work-box/lib/contract/unipair"
 	"github.com/houyanzu/work-box/lib/httptool"
@@ -29,9 +29,13 @@ const (
 	DeadAddress = "0x000000000000000000000000000000000000dEaD"
 )
 
-func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
-	conf := config.GetConfig()
-	client, err = ethclient.Dial(conf.Eth.Host)
+func GetClientAndAuth(chainDBID uint, priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err = ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -56,7 +60,7 @@ func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *e
 		return
 	}
 
-	auth, err = bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(conf.Eth.ChainId))
+	auth, err = bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(chain.Data.ChainID))
 	if err != nil {
 		return
 	}
@@ -67,10 +71,14 @@ func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *e
 	return
 }
 
-func BalanceOf(token, wallet string) (balance decimal.Decimal, err error) {
-	conf := config.GetConfig()
+func BalanceOf(chainDBID uint, token, wallet string) (balance decimal.Decimal, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
 	balance = decimal.Zero
-	client, err := ethclient.Dial(conf.Eth.Host)
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -88,9 +96,13 @@ func BalanceOf(token, wallet string) (balance decimal.Decimal, err error) {
 	return
 }
 
-func TokenSymbol(token string) (res string, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func TokenSymbol(chainDBID uint, token string) (res string, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -107,9 +119,13 @@ func TokenSymbol(token string) (res string, err error) {
 	return
 }
 
-func TokenName(token string) (res string, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func TokenName(chainDBID uint, token string) (res string, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -126,9 +142,13 @@ func TokenName(token string) (res string, err error) {
 	return
 }
 
-func TokenTotalSupply(token string) (res decimal.Decimal, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func TokenTotalSupply(chainDBID uint, token string) (res decimal.Decimal, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -146,9 +166,13 @@ func TokenTotalSupply(token string) (res decimal.Decimal, err error) {
 	return
 }
 
-func TokenDecimals(token string) (res uint8, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func TokenDecimals(chainDBID uint, token string) (res uint8, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -165,10 +189,14 @@ func TokenDecimals(token string) (res uint8, err error) {
 	return
 }
 
-func BalanceAt(addr string) (balance decimal.Decimal, err error) {
+func BalanceAt(chainDBID uint, addr string) (balance decimal.Decimal, err error) {
 	balance = decimal.Zero
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -183,9 +211,13 @@ func BalanceAt(addr string) (balance decimal.Decimal, err error) {
 	return
 }
 
-func GetTxStatus(hash string) (status uint64, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func GetTxStatus(chainDBID uint, hash string) (status uint64, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -202,9 +234,14 @@ func GetTxStatus(hash string) (status uint64, err error) {
 	return
 }
 
-func GetUniPrice(pair, token string, amount decimal.Decimal) (price decimal.Decimal, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func GetUniPrice(chainDBID uint, pair, token string, amount decimal.Decimal) (price decimal.Decimal, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -246,12 +283,18 @@ func IsAddress(addr string) bool {
 	return re.MatchString(addr)
 }
 
-func IsContract(addr string) (res bool, err error) {
+func IsContract(chainDBID uint, addr string) (res bool, err error) {
 	if !IsAddress(addr) {
 		return false, nil
 	}
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -265,10 +308,14 @@ func IsContract(addr string) (res bool, err error) {
 	return
 }
 
-func GetGasFeeByHash(hash string) (decimal.Decimal, error) {
-	conf := config.GetConfig()
+func GetGasFeeByHash(chainDBID uint, hash string) (decimal.Decimal, error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err := errors.New("chain not found")
+		return decimal.Zero, err
+	}
 
-	client, err := ethclient.Dial(conf.Eth.Host)
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -288,18 +335,24 @@ func GetGasFeeByHash(hash string) (decimal.Decimal, error) {
 	return gasFee, nil
 }
 
-func GetApiLastBlockNum() (num uint64, err error) {
+func GetApiLastBlockNum(chainDBID uint) (num uint64, err error) {
 	var res struct {
 		Status string `json:"status"`
 		Result string `json:"result"`
 	}
-	conf := config.GetConfig()
+
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+
 	now := time.Now().Unix() - 5
-	url := conf.Eth.ApiHost +
+	url := chain.Data.ApiHost +
 		"?module=block&action=getblocknobytime" +
 		"&timestamp=" + fmt.Sprintf("%d", now) +
 		"&closest=before" +
-		"&apikey=" + conf.Eth.ApiKey
+		"&apikey=" + chain.Data.ApiKey
 	resp, code, err := httptool.Get(url, 20*time.Second)
 	if err != nil {
 		return
