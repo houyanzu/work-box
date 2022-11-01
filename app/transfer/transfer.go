@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/houyanzu/work-box/config"
+	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/database/models/keys"
 	"github.com/houyanzu/work-box/database/models/locktransferdetails"
 	"github.com/houyanzu/work-box/database/models/pwdwt"
@@ -98,12 +98,16 @@ func InitDBTrans(priKeyID uint, password []byte, de crypto2.Decoder) (e error) {
 	return
 }
 
-func Transfer(limit int, module string) (err error) {
-	conf := config.GetConfig()
-	pending := transferrecords.New(nil).InitPending(FromAddress, module)
+func Transfer(chainDBID uint, limit int, module string) (err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	pending := transferrecords.New(nil).InitPending(chainDBID, FromAddress, module)
 	if pending.Exists() {
 		var status uint64
-		status, err = eth.GetTxStatus(pending.Data.Hash)
+		status, err = eth.GetTxStatus(chainDBID, pending.Data.Hash)
 		if err != nil {
 			//TODO:覆盖操作
 			return
@@ -125,7 +129,7 @@ func Transfer(limit int, module string) (err error) {
 		}
 	}
 
-	waitingList := transferdetails.New(nil).InitWaitingList(limit, module)
+	waitingList := transferdetails.New(nil).InitWaitingList(chainDBID, limit, module)
 	length := len(waitingList.List)
 	if length == 0 {
 		return
@@ -141,11 +145,11 @@ func Transfer(limit int, module string) (err error) {
 		amount := m.Data.Amount.BigInt()
 		amounts[index] = amount
 		ids[index] = m.Data.ID
-		if m.Data.Token == "0x0000000000000000000000000000000000000000" {
+		if m.Data.Token == eth.EthAddress {
 			totalValue.Add(totalValue, amount)
 		}
 	})
-	client, err := ethclient.Dial(conf.Eth.Host)
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -163,7 +167,7 @@ func Transfer(limit int, module string) (err error) {
 		return
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(conf.Eth.ChainId))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(chain.Data.ChainID))
 	if err != nil {
 		return
 	}
@@ -172,7 +176,7 @@ func Transfer(limit int, module string) (err error) {
 	auth.GasLimit = GasLimit * uint64(len(waitingList.List)) // in units
 	auth.GasPrice = gasPrice
 
-	multiCon := common.HexToAddress(conf.Eth.MultiTransferContract)
+	multiCon := common.HexToAddress(chain.Data.MultiTransferContract)
 	multiTransferInstance, err := multitransfer.NewMultitransfer(multiCon, client)
 	if err != nil {
 		return
@@ -185,6 +189,7 @@ func Transfer(limit int, module string) (err error) {
 
 	tr := transferrecords.New(nil)
 	tr.Data.Type = 1
+	tr.Data.ChainDbId = chainDBID
 	tr.Data.From = FromAddress
 	tr.Data.Hash = hash
 	tr.Data.Nonce = nonce
@@ -195,13 +200,17 @@ func Transfer(limit int, module string) (err error) {
 	return
 }
 
-func LockTransfer(module string) (err error) {
+func LockTransfer(chainDBID uint, module string) (err error) {
 	limit := 1
-	conf := config.GetConfig()
-	pending := transferrecords.New(nil).InitPending(FromAddress, module)
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	pending := transferrecords.New(nil).InitPending(chainDBID, FromAddress, module)
 	if pending.Data.ID > 0 {
 		var status uint64
-		status, err = eth.GetTxStatus(pending.Data.Hash)
+		status, err = eth.GetTxStatus(chainDBID, pending.Data.Hash)
 		if err != nil {
 			//TODO:覆盖操作
 			return
@@ -223,7 +232,7 @@ func LockTransfer(module string) (err error) {
 		}
 	}
 
-	waitingList := locktransferdetails.New(nil).InitWaitingList(limit, module)
+	waitingList := locktransferdetails.New(nil).InitWaitingList(chainDBID, limit, module)
 	length := len(waitingList.List)
 	if length == 0 {
 		return
@@ -231,7 +240,7 @@ func LockTransfer(module string) (err error) {
 
 	waiting := locktransferdetails.New(nil).InitByData(waitingList.List[0])
 
-	client, err := ethclient.Dial(conf.Eth.Host)
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -249,7 +258,7 @@ func LockTransfer(module string) (err error) {
 		return
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(conf.Eth.ChainId))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(chain.Data.ChainID))
 	if err != nil {
 		return
 	}
@@ -258,7 +267,7 @@ func LockTransfer(module string) (err error) {
 	auth.GasLimit = GasLimit   // in units
 	auth.GasPrice = gasPrice
 
-	ltCon := common.HexToAddress(conf.Eth.LockTransferContract)
+	ltCon := common.HexToAddress(chain.Data.LockTransferContract)
 	ltInstance, err := locktransfer.NewLocktransfer(ltCon, client)
 	if err != nil {
 		return
@@ -278,6 +287,7 @@ func LockTransfer(module string) (err error) {
 	hash := tx.Hash().Hex()
 
 	tr := transferrecords.New(nil)
+	tr.Data.ChainDbId = chainDBID
 	tr.Data.Type = 2
 	tr.Data.From = FromAddress
 	tr.Data.Hash = hash
@@ -288,9 +298,13 @@ func LockTransfer(module string) (err error) {
 	return
 }
 
-func SingleTransfer(token string, to string, amount *big.Int, priKey string) (hash string, nonce uint64, err error) {
-	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
+func SingleTransfer(chainDBID uint, token string, to string, amount *big.Int, priKey string) (hash string, nonce uint64, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
@@ -317,11 +331,11 @@ func SingleTransfer(token string, to string, amount *big.Int, priKey string) (ha
 		return
 	}
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(conf.Eth.ChainId))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(chain.Data.ChainID))
 	if err != nil {
 		return
 	}
-	if token == "0x0000000000000000000000000000000000000000" {
+	if token == eth.EthAddress {
 		//tx := types.NewTransaction(nonce, common.HexToAddress(to), amount, 21000, gasPrice, nil)
 		toAddress := common.HexToAddress(to)
 		baseTx := &types.LegacyTx{
@@ -334,7 +348,7 @@ func SingleTransfer(token string, to string, amount *big.Int, priKey string) (ha
 		}
 		tx := types.NewTx(baseTx)
 		var signedTx *types.Transaction
-		signedTx, err = types.SignTx(tx, types.NewEIP155Signer(big.NewInt(conf.Eth.ChainId)), privateKey)
+		signedTx, err = types.SignTx(tx, types.NewEIP155Signer(big.NewInt(chain.Data.ChainID)), privateKey)
 		if err != nil {
 			return
 		}

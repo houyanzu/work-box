@@ -10,6 +10,7 @@ import (
 
 type BoxTransferDetails struct {
 	ID         uint
+	ChainDbId  uint
 	Module     string
 	Token      string
 	To         string
@@ -31,7 +32,8 @@ func (c *BoxTransferDetails) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `box_transfer_details` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`module` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`token` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`to` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`status` tinyint(1) NOT NULL,\n\t`transfer_id` int(11) NOT NULL DEFAULT 0,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `trans`(`transfer_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;").Error
+	sql := "CREATE TABLE `box_transfer_details` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`chain_db_id` int(11) UNSIGNED NOT NULL DEFAULT 1,\n\t`module` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`token` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`to` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`status` tinyint(1) NOT NULL,\n\t`transfer_id` int(11) NOT NULL DEFAULT 0,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `trans`(`transfer_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
+	return db.Exec(sql).Error
 }
 
 type Model struct {
@@ -81,8 +83,8 @@ func (m *Model) Add() {
 	m.Error = m.Db.Create(&m.Data).Error
 }
 
-func (m *Model) InitWaitingList(limit int, module string) *Model {
-	m.Error = m.Db.Where("module = ? AND status = 0", module).Limit(limit).Find(&m.List).Error
+func (m *Model) InitWaitingList(chainDBID uint, limit int, module string) *Model {
+	m.Error = m.Db.Where("chain_db_id = ? AND module = ? AND status = 0", chainDBID, module).Limit(limit).Find(&m.List).Error
 	return m
 }
 

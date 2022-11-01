@@ -3,7 +3,7 @@ package collect
 import (
 	"errors"
 	"github.com/houyanzu/work-box/app/transfer"
-	"github.com/houyanzu/work-box/config"
+	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/database/models/keys"
 	"github.com/houyanzu/work-box/database/models/tokens"
 	"github.com/houyanzu/work-box/database/models/ukcollectrecord"
@@ -15,7 +15,7 @@ import (
 
 var CollectGasLimit = uint64(150000)
 
-func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err error) {
+func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err error) {
 	ukb := userkeysbalance.New(nil).InitById(ukbID)
 	if !ukb.Exists() {
 		err = errors.New("balance not exists")
@@ -23,10 +23,10 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 	}
 
 	uk := userkeys.New(nil).InitById(ukb.Data.KeyID)
-	if uk.Data.CollectStatus == 1 {
-		collectRecord := ukcollectrecord.New(nil).InitPendingByKeyID(uk.Data.ID)
+	if ukb.Data.CollectStatus == 1 {
+		collectRecord := ukcollectrecord.New(nil).InitPendingByKeyID(chainDBID, uk.Data.ID)
 		if collectRecord.Exists() {
-			status, err := eth.GetTxStatus(collectRecord.Data.Hash)
+			status, err := eth.GetTxStatus(chainDBID, collectRecord.Data.Hash)
 			if err != nil {
 				return err
 			}
@@ -35,21 +35,25 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 			} else {
 				collectRecord.SetFail()
 			}
-			uk.SetCollectFinish()
+			ukb.SetCollectFinish()
 			ukb.UpdateBalance()
 			return nil
 		}
 	}
-	balance, err := eth.BalanceAt(uk.Data.Address)
+	balance, err := eth.BalanceAt(chainDBID, uk.Data.Address)
 	if err != nil {
 		return
 	}
-	conf := config.GetConfig()
-	if balance.LessThan(conf.Extra.UserKeyFeedAmount) {
-		uk.SetWaitFeed()
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not exists")
 		return
 	}
-	if uk.Data.Status != 0 {
+	if balance.LessThan(chain.Data.UserKeyFeedAmount) {
+		ukb.SetWaitFeed()
+		return
+	}
+	if ukb.Data.Status != 0 {
 		return
 	}
 
@@ -58,7 +62,7 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 	transfer.GasLimit = CollectGasLimit
 	token := tokens.New(nil).InitById(ukb.Data.TokenID)
 	amount := ukb.Data.Balance
-	hash, nonce, err := transfer.SingleTransfer(token.Data.Contract, toKey.Data.Address, amount.BigInt(), uk.GetPriKey(password, de))
+	hash, nonce, err := transfer.SingleTransfer(chainDBID, token.Data.Contract, toKey.Data.Address, amount.BigInt(), uk.GetPriKey(password, de))
 	if err != nil {
 		return
 	}
@@ -70,9 +74,10 @@ func Collect(password []byte, ukbID, toKeyID uint, de crypto2.Decoder) (err erro
 	cr.Data.Nonce = nonce
 	cr.Data.Amount = amount
 	cr.Data.BalanceID = ukb.Data.ID
+	cr.Data.ChainDbId = chainDBID
 	cr.Add()
 
-	uk.SetCollecting(cr.Data.ID)
+	ukb.SetCollecting(cr.Data.ID)
 
 	return
 }
