@@ -21,11 +21,14 @@ type EventLog struct {
 	contract    string
 }
 
-var initBlock = make(map[string]uint64)
+var initBlock = make(map[uint]map[string]uint64)
 
-func InitBlockNum(contract string, blockNum uint64) {
+func InitBlockNum(chainDBID uint, contract string, blockNum uint64) {
 	contract = strings.ToLower(contract)
-	initBlock[contract] = blockNum
+	if _, ok := initBlock[chainDBID]; !ok {
+		initBlock[chainDBID] = make(map[string]uint64)
+	}
+	initBlock[chainDBID][contract] = blockNum
 }
 
 func Monitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, err error) {
@@ -43,7 +46,7 @@ func Monitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, e
 	lastBlockNum := chainrecord.GetLastBlockNum(chainDBID, contract)
 	if lastBlockNum == 0 {
 		var ok bool
-		if lastBlockNum, ok = initBlock[contract]; ok {
+		if lastBlockNum, ok = initBlock[chainDBID][contract]; ok {
 			record := chainrecord.New(nil)
 			record.Data.Contract = contract
 			record.Data.BlockNum = lastBlockNum
@@ -83,6 +86,7 @@ func Monitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, e
 }
 
 func (e EventLog) Foreach(f func(index int, log types.Log, chainRecordId uint)) {
+	have := false
 	for k, v := range e.logs {
 		blockNum := v.BlockNumber
 		hash := v.TxHash.Hex()
@@ -94,12 +98,15 @@ func (e EventLog) Foreach(f func(index int, log types.Log, chainRecordId uint)) 
 		record.Data.ChainDbId = e.ChainDBID
 		record.Add()
 		f(k, v, record.Data.ID)
+		have = true
 	}
-	if e.endBlockNum <= e.netLastNum {
-		record := chainrecord.New(nil)
-		record.Data.Contract = e.contract
-		record.Data.BlockNum = e.endBlockNum
-		record.Data.ChainDbId = e.ChainDBID
-		record.Add()
+	if !have {
+		if e.endBlockNum <= e.netLastNum {
+			record := chainrecord.New(nil)
+			record.Data.Contract = e.contract
+			record.Data.BlockNum = e.endBlockNum
+			record.Data.ChainDbId = e.ChainDBID
+			record.Add()
+		}
 	}
 }

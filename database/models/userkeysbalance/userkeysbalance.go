@@ -83,8 +83,8 @@ func (m *Model) UpdateBalance() {
 	m.Db.Save(&m.Data)
 }
 
-func (m *Model) InitListByBalance(tokenID uint, balance decimal.Decimal) *Model {
-	m.Db.Where("token_id = ?", tokenID).Where(fmt.Sprintf("balance >= %s", balance.String())).Find(&m.List)
+func (m *Model) InitListByBalance(chainDBID, tokenID uint, balance decimal.Decimal) *Model {
+	m.Db.Where("chain_db_id = ? AND token_id = ?", chainDBID, tokenID).Where(fmt.Sprintf("balance >= %s", balance.String())).Find(&m.List)
 	return m
 }
 

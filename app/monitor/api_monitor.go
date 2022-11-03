@@ -29,7 +29,7 @@ func ApiMonitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog
 	lastBlockNum := chainrecord.GetLastBlockNum(chainDBID, contract)
 	if lastBlockNum == 0 {
 		var ok bool
-		if lastBlockNum, ok = initBlock[contract]; ok {
+		if lastBlockNum, ok = initBlock[chainDBID][contract]; ok {
 			record := chainrecord.New(nil)
 			record.Data.Contract = contract
 			record.Data.BlockNum = lastBlockNum
