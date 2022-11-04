@@ -14,7 +14,7 @@ type BoxTokenGroup struct {
 }
 
 func (m *BoxTokenGroup) TableName() string {
-	return "box_asset_group"
+	return "box_token_group"
 }
 
 var haveTable = false
