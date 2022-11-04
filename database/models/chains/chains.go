@@ -9,7 +9,7 @@ type BoxChains struct {
 	ID                    uint            `json:"id" gorm:"column:id"`
 	Name                  string          `json:"name" gorm:"column:name"`
 	Rpc                   string          `json:"rpc" gorm:"column:rpc"`
-	ChainID               uint            `json:"chain_id" gorm:"column:chain_id"`
+	ChainID               int64           `json:"chain_id" gorm:"column:chain_id"`
 	ApiHost               string          `json:"api_host" gorm:"column:api_host"`
 	ApiKey                string          `json:"api_key" gorm:"column:api_key"`
 	MultiTransferContract string          `json:"multi_transfer_contract" gorm:"column:multi_transfer_contract"`
