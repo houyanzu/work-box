@@ -60,7 +60,7 @@ func GetClientAndAuth(chainDBID uint, priKey string, gasLimit uint64, value *big
 		return
 	}
 
-	auth, err = bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(chain.Data.ChainID))
+	auth, err = bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(int64(chain.Data.ChainID)))
 	if err != nil {
 		return
 	}
