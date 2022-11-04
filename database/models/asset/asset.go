@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/database/models/assetrecord"
-	"github.com/houyanzu/work-box/database/models/tokens"
+	"github.com/houyanzu/work-box/database/models/tokengroup"
 	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -14,7 +14,7 @@ import (
 type BoxAsset struct {
 	ID            uint
 	UserId        uint
-	TokenId       uint
+	TokenGroupId  uint
 	Symbol        string
 	Balance       decimal.Decimal
 	FreezeBalance decimal.Decimal
@@ -30,7 +30,8 @@ func (data *BoxAsset) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `box_asset` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`user_id` int(11) UNSIGNED NOT NULL,\n\t`token_id` int(11) UNSIGNED NOT NULL,\n\t`symbol` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`balance` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`freeze_balance` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`update_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tUnique KEY `ut`(`user_id`,`token_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;").Error
+	sql := "CREATE TABLE `box_asset` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`user_id` int(11) UNSIGNED NOT NULL,\n\t`token_group_id` int(11) UNSIGNED NOT NULL,\n\t`symbol` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`balance` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`freeze_balance` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`update_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tUnique KEY `ut`(`user_id`,`token_group_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
+	return db.Exec(sql).Error
 }
 
 type Model struct {
@@ -60,22 +61,22 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
-func NewFromUserIdAndTokenId(ctx *database.MysqlContext, userId, tokenId uint) *Model {
+func NewFromUserIdAndTokenGroupId(ctx *database.MysqlContext, userId, tokenGroupID uint) *Model {
 	if ctx == nil {
 		ctx = database.GetContext()
 	}
 	m := New(ctx)
-	m.Db.Where("user_id = ? AND token_id = ?", userId, tokenId).Take(&m.Data)
+	m.Db.Where("user_id = ? AND token_group_id = ?", userId, tokenGroupID).Take(&m.Data)
 	if !m.Exists() {
-		token := tokens.New(nil).InitById(tokenId)
+		tokenGroup := tokengroup.New(nil).InitById(tokenGroupID)
 		m.Data.UserId = userId
-		m.Data.TokenId = tokenId
-		m.Data.Symbol = token.Data.Symbol
+		m.Data.TokenGroupId = tokenGroupID
+		m.Data.Symbol = tokenGroup.Data.Symbol
 		m.Data.Balance = decimal.Zero
 		m.Data.FreezeBalance = decimal.Zero
 		m.Add()
 	}
-	m.Db.Where("user_id = ? AND token_id = ?", userId, tokenId).Take(&m.Data)
+	m.Db.Where("user_id = ? AND token_group_id = ?", userId, tokenGroupID).Take(&m.Data)
 	return m
 }
 
@@ -155,7 +156,7 @@ func (m *Model) UnfreezeAndSubBalance(
 	assetRecord.Data.UserId = m.Data.UserId
 	assetRecord.Data.Module = module
 	assetRecord.Data.ModuleId = moduleId
-	assetRecord.Data.TokenId = m.Data.TokenId
+	assetRecord.Data.TokenGroupId = m.Data.TokenGroupId
 	assetRecord.Data.Symbol = m.Data.Symbol
 	assetRecord.Data.Amount = amount
 	assetRecord.Data.CreateTime = mytime.NewFromNow()
@@ -189,7 +190,7 @@ func (m *Model) SubBalance(
 	assetRecord.Data.UserId = m.Data.UserId
 	assetRecord.Data.Module = module
 	assetRecord.Data.ModuleId = moduleId
-	assetRecord.Data.TokenId = m.Data.TokenId
+	assetRecord.Data.TokenGroupId = m.Data.TokenGroupId
 	assetRecord.Data.Symbol = m.Data.Symbol
 	assetRecord.Data.Amount = amount
 	assetRecord.Data.CreateTime = mytime.NewFromNow()
@@ -220,7 +221,7 @@ func (m *Model) AddBalance(
 	assetRecord.Data.UserId = m.Data.UserId
 	assetRecord.Data.Module = module
 	assetRecord.Data.ModuleId = moduleId
-	assetRecord.Data.TokenId = m.Data.TokenId
+	assetRecord.Data.TokenGroupId = m.Data.TokenGroupId
 	assetRecord.Data.Symbol = m.Data.Symbol
 	assetRecord.Data.Amount = amount
 	assetRecord.Data.Remark = remark

@@ -28,3 +28,17 @@ ALTER TABLE `box_tokens`
 ALTER TABLE `box_uk_collect_record`
     ADD COLUMN `chain_db_id` int(11) UNSIGNED NOT NULL DEFAULT 1 AFTER `id`
 ;
+
+----------------------------------------------------------
+
+ALTER TABLE `box_asset`
+    CHANGE COLUMN `token_id` `token_group_id` int(11) UNSIGNED NOT NULL AFTER `user_id`
+;
+
+ALTER TABLE `box_asset_record`
+    CHANGE COLUMN `token_id` `token_group_id` int(11) UNSIGNED NOT NULL AFTER `user_id`
+;
+
+ALTER TABLE `box_tokens`
+    ADD COLUMN `group_id` int(11) UNSIGNED NOT NULL DEFAULT 0 AFTER `chain_db_id`
+;

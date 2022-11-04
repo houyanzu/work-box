@@ -68,10 +68,12 @@ func (m *Model) Exists() bool {
 }
 
 func (m *Model) InitByKeyAndToken(keyID, tokenID uint) *Model {
+	token := tokens.New(nil).InitById(tokenID)
 	m.Db.Where("key_id = ? AND token_id = ?", keyID, tokenID).Take(&m.Data)
 	if !m.Exists() {
 		m.Data.KeyID = keyID
 		m.Data.TokenID = tokenID
+		m.Data.ChainDbID = token.Data.ChainDbID
 	}
 	return m
 }

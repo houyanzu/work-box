@@ -25,7 +25,7 @@ var initBlock = make(map[uint]map[string]uint64)
 
 func InitBlockNum(chainDBID uint, contract string, blockNum uint64) {
 	contract = strings.ToLower(contract)
-	if _, ok := initBlock[chainDBID]; !ok {
+	if initBlock[chainDBID] == nil {
 		initBlock[chainDBID] = make(map[string]uint64)
 	}
 	initBlock[chainDBID][contract] = blockNum
