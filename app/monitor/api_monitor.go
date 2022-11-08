@@ -17,7 +17,7 @@ type apiLogRes struct {
 	Result []types.Log
 }
 
-func ApiMonitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, err error) {
+func ApiMonitor(chainDBID uint, contract string, blockDiff uint64, eventID string) (res EventLog, err error) {
 	contract = strings.ToLower(contract)
 
 	chain := chains.New(nil).InitByID(chainDBID)
@@ -57,6 +57,9 @@ func ApiMonitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog
 		"&toBlock=" + fmt.Sprintf("%d", endBlockNum) +
 		"&address=" + contract +
 		"&apikey=" + chain.Data.ApiKey
+	if eventID != "" {
+		url += "&topic0=" + eventID
+	}
 	resp, code, err := httptool.Get(url, 20*time.Second)
 	if err != nil {
 		return

@@ -10,7 +10,9 @@ import (
 	"github.com/houyanzu/work-box/database/models/userkeys"
 	"github.com/houyanzu/work-box/database/models/userkeysbalance"
 	crypto2 "github.com/houyanzu/work-box/lib/crypto"
+	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/houyanzu/work-box/tool/eth"
+	"time"
 )
 
 var CollectGasLimit = uint64(150000)
@@ -28,7 +30,14 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 		if collectRecord.Exists() {
 			status, err := eth.GetTxStatus(chainDBID, collectRecord.Data.Hash)
 			if err != nil {
-				return err
+				exTime := collectRecord.Data.CreateTime.Add(30 * time.Minute)
+				now := mytime.NewFromNow()
+				if exTime.Before(now) {
+					collectRecord.SetFail()
+				}
+				ukb.SetCollectFinish()
+				ukb.UpdateBalance()
+				return nil
 			}
 			if status == 1 {
 				collectRecord.SetSuccess()

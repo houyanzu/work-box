@@ -121,9 +121,9 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 				} else if pending.Data.Type == 2 {
 					locktransferdetails.New(nil).Reset(pending.Data.ID)
 				}
-			} else {
-				return
+
 			}
+			return
 		}
 		if status == 1 {
 			pending.SetSuccess()
