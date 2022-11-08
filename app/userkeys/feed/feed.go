@@ -27,7 +27,7 @@ func Feed(wg *sync.WaitGroup) {
 		})
 	}
 
-	waitList := userkeysbalance.New(nil).InitWaitingList()
+	waitList := userkeysbalance.New(nil).InitWaitingList(ChainDBID)
 	if waitList.ListEmpty() {
 		return
 	}

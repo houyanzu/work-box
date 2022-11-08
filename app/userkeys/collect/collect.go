@@ -40,6 +40,9 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 			return nil
 		}
 	}
+	if ukb.Data.Status != 0 {
+		return
+	}
 	balance, err := eth.BalanceAt(chainDBID, uk.Data.Address)
 	if err != nil {
 		return
@@ -51,9 +54,6 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 	}
 	if balance.LessThan(chain.Data.UserKeyFeedAmount) {
 		ukb.SetWaitFeed()
-		return
-	}
-	if ukb.Data.Status != 0 {
 		return
 	}
 

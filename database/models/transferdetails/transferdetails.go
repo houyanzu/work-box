@@ -118,3 +118,13 @@ func (m *Model) SetFail(transferId uint) bool {
 	}).Error
 	return true
 }
+
+func (m *Model) Reset(transferId uint) bool {
+	if m.Data.ID > 0 {
+		return false
+	}
+	m.Error = m.Db.Model(&m.Data).Where("transfer_id = ?", transferId).Updates(map[string]any{
+		"status": 0,
+	}).Error
+	return true
+}

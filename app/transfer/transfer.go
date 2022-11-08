@@ -20,8 +20,10 @@ import (
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	crypto2 "github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/lib/crypto/aes"
+	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/houyanzu/work-box/tool/eth"
 	"math/big"
+	"time"
 )
 
 var privateKeyStr string
@@ -110,7 +112,18 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		status, err = eth.GetTxStatus(chainDBID, pending.Data.Hash)
 		if err != nil {
 			//TODO:覆盖操作
-			return
+			exTime := pending.Data.CreateTime.Add(30 * time.Minute)
+			now := mytime.NewFromNow()
+			if exTime.Before(now) {
+				pending.SetFail()
+				if pending.Data.Type == 1 {
+					transferdetails.New(nil).Reset(pending.Data.ID)
+				} else if pending.Data.Type == 2 {
+					locktransferdetails.New(nil).Reset(pending.Data.ID)
+				}
+			} else {
+				return
+			}
 		}
 		if status == 1 {
 			pending.SetSuccess()

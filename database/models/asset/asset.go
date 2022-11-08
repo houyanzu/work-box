@@ -180,7 +180,7 @@ func (m *Model) SubBalance(
 	}
 
 	sql := fmt.Sprintf("UPDATE `box_asset` SET `balance` = `balance` - %s WHERE `id` = %d AND `balance` >= %s;",
-		amount.String(), amount.String(), m.Data.ID, amount.String())
+		amount.String(), m.Data.ID, amount.String())
 	res := m.Db.Exec(sql).RowsAffected
 	if res == 0 {
 		return errors.New("insufficient funds")

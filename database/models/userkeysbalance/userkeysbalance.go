@@ -120,8 +120,8 @@ func (m *Model) SetFeedFinish() {
 	m.Db.Model(&m.Data).Update("status", 0)
 }
 
-func (m *Model) InitWaitingList() *Model {
-	m.Db.Where("status = 1").Find(&m.List)
+func (m *Model) InitWaitingList(chainDBID uint) *Model {
+	m.Db.Where("chain_db_id = ? AND status = 1", chainDBID).Find(&m.List)
 	return m
 }
 
