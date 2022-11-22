@@ -42,3 +42,16 @@ ALTER TABLE `box_asset_record`
 ALTER TABLE `box_tokens`
     ADD COLUMN `group_id` int(11) UNSIGNED NOT NULL DEFAULT 0 AFTER `chain_db_id`
 ;
+
+
+-----------------------------------------------------------
+
+CREATE TABLE `box_collect_tokens` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `token_id` int(11) UNSIGNED NOT NULL,
+    `status` tinyint(1) NOT NULL DEFAULT 1,
+    `feed_amount` decimal(32) UNSIGNED NOT NULL,
+    `collect_amount` decimal(32) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB
+  DEFAULT CHARACTER SET=utf8;

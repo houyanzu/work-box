@@ -3,7 +3,7 @@ package collect
 import (
 	"errors"
 	"github.com/houyanzu/work-box/app/transfer"
-	"github.com/houyanzu/work-box/database/models/chains"
+	"github.com/houyanzu/work-box/database/models/collecttokens"
 	"github.com/houyanzu/work-box/database/models/keys"
 	"github.com/houyanzu/work-box/database/models/tokens"
 	"github.com/houyanzu/work-box/database/models/ukcollectrecord"
@@ -56,12 +56,9 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 	if err != nil {
 		return
 	}
-	chain := chains.New(nil).InitByID(chainDBID)
-	if !chain.Exists() {
-		err = errors.New("chain not exists")
-		return
-	}
-	if balance.LessThan(chain.Data.UserKeyFeedAmount) {
+
+	ct := collecttokens.New(nil).InitByTokenID(ukb.Data.TokenID)
+	if balance.LessThan(ct.Data.FeedAmount) {
 		ukb.SetWaitFeed()
 		return
 	}

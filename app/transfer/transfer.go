@@ -22,13 +22,17 @@ import (
 	"github.com/houyanzu/work-box/lib/crypto/aes"
 	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/houyanzu/work-box/tool/eth"
+	"github.com/shopspring/decimal"
 	"math/big"
+	"strings"
 	"time"
 )
 
 var privateKeyStr string
 var FromAddress string
 var GasLimit = uint64(100000)
+
+var CheckBalance = false
 
 func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	defer func() {
@@ -152,9 +156,16 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 	ids := make([]uint, length)
 	amounts := make([]*big.Int, length)
 	totalValue := big.NewInt(0)
+
+	transferTokens := make(map[string]decimal.Decimal)
 	waitingList.Foreach(func(index int, m *transferdetails.Model) {
 		tokens[index] = common.HexToAddress(m.Data.Token)
 		tos[index] = common.HexToAddress(m.Data.To)
+		if _, ok := transferTokens[strings.ToLower(m.Data.Token)]; ok {
+			transferTokens[strings.ToLower(m.Data.Token)] = transferTokens[strings.ToLower(m.Data.Token)].Add(m.Data.Amount)
+		} else {
+			transferTokens[strings.ToLower(m.Data.Token)] = m.Data.Amount
+		}
 		amount := m.Data.Amount.BigInt()
 		amounts[index] = amount
 		ids[index] = m.Data.ID
@@ -162,6 +173,15 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 			totalValue.Add(totalValue, amount)
 		}
 	})
+	if CheckBalance {
+		for token, amount := range transferTokens {
+			ba, _ := eth.BalanceOf(chainDBID, token, FromAddress)
+			if ba.LessThan(amount) {
+				err = errors.New("insufficient balance: " + token)
+				return
+			}
+		}
+	}
 	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
