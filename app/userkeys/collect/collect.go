@@ -25,7 +25,10 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 	}
 
 	uk := userkeys.New(nil).InitById(ukb.Data.KeyID)
-	if ukb.Data.CollectStatus == 1 {
+
+	pendingUkb := userkeysbalance.New(nil).InitCollectingByKeyID(uk.Data.ID)
+
+	if pendingUkb.Exists() {
 		collectRecord := ukcollectrecord.New(nil).InitPendingByKeyID(chainDBID, uk.Data.ID)
 		if collectRecord.Exists() {
 			status, err := eth.GetTxStatus(chainDBID, collectRecord.Data.Hash)
@@ -34,9 +37,9 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 				now := mytime.NewFromNow()
 				if exTime.Before(now) {
 					collectRecord.SetFail()
+					pendingUkb.SetCollectFinish()
+					pendingUkb.UpdateBalance()
 				}
-				ukb.SetCollectFinish()
-				ukb.UpdateBalance()
 				return nil
 			}
 			if status == 1 {
@@ -44,8 +47,8 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 			} else {
 				collectRecord.SetFail()
 			}
-			ukb.SetCollectFinish()
-			ukb.UpdateBalance()
+			pendingUkb.SetCollectFinish()
+			pendingUkb.UpdateBalance()
 			return nil
 		}
 	}

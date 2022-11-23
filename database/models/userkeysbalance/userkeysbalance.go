@@ -146,3 +146,8 @@ func (m *Model) SetCollecting(id uint) {
 func (m *Model) SetWaitFeed() {
 	m.Db.Model(&m.Data).Update("status", 1)
 }
+
+func (m *Model) InitCollectingByKeyID(keyID uint) *Model {
+	m.Db.Where("key_id = ? AND status = 1", keyID).Take(&m.Data)
+	return m
+}
