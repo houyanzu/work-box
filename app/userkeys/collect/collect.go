@@ -26,7 +26,7 @@ func Collect(chainDBID uint, password []byte, ukbID, toKeyID uint, de crypto2.De
 
 	uk := userkeys.New(nil).InitById(ukb.Data.KeyID)
 
-	pendingUkb := userkeysbalance.New(nil).InitCollectingByKeyID(uk.Data.ID)
+	pendingUkb := userkeysbalance.New(nil).InitCollectingByKeyID(chainDBID, uk.Data.ID)
 
 	if pendingUkb.Exists() {
 		collectRecord := ukcollectrecord.New(nil).InitPendingByKeyID(chainDBID, uk.Data.ID)

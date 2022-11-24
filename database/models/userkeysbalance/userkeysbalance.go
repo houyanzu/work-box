@@ -147,7 +147,7 @@ func (m *Model) SetWaitFeed() {
 	m.Db.Model(&m.Data).Update("status", 1)
 }
 
-func (m *Model) InitCollectingByKeyID(keyID uint) *Model {
-	m.Db.Where("key_id = ? AND status = 1", keyID).Take(&m.Data)
+func (m *Model) InitCollectingByKeyID(chainDBID, keyID uint) *Model {
+	m.Db.Where("key_id = ? AND chain_db_id = ? AND collect_status = 1", keyID, chainDBID).Take(&m.Data)
 	return m
 }
