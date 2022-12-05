@@ -5,16 +5,27 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
+var Header map[string]string
+
 // PostJSON .
 func PostJSON(url string, js []byte) ([]byte, int, error) {
+	defer func() {
+		Header = nil
+	}()
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(js))
 	if err != nil {
 		return nil, 0, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if Header != nil {
+		for k, v := range Header {
+			req.Header.Set(k, v)
+		}
+	}
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -32,7 +43,21 @@ func PostJSON(url string, js []byte) ([]byte, int, error) {
 
 // PostForm .
 func PostForm(url string, form url.Values) ([]byte, int, error) {
-	resp, err := http.PostForm(url, form)
+	defer func() {
+		Header = nil
+	}()
+	req, err := http.NewRequest("POST", url, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, 0, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if Header != nil {
+		for k, v := range Header {
+			req.Header.Set(k, v)
+		}
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -53,10 +78,20 @@ func PostForm(url string, form url.Values) ([]byte, int, error) {
 
 // Get .
 func Get(url string, timeout time.Duration) ([]byte, int, error) {
-	client := http.Client{
-		Timeout: timeout,
+	defer func() {
+		Header = nil
+	}()
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, 0, err
 	}
-	resp, err := client.Get(url)
+	if Header != nil {
+		for k, v := range Header {
+			req.Header.Set(k, v)
+		}
+	}
+	client := &http.Client{Timeout: timeout}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -68,7 +103,6 @@ func Get(url string, timeout time.Duration) ([]byte, int, error) {
 		}
 	}()
 	body, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		return nil, 0, err
 	}

@@ -55,3 +55,8 @@ CREATE TABLE `box_collect_tokens` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB
   DEFAULT CHARACTER SET=utf8;
+
+------------------------------------------------------------
+ALTER TABLE `box_monitor_chain_record`
+    MODIFY COLUMN `block_num` bigint(20) UNSIGNED NOT NULL AFTER `contract`
+;
