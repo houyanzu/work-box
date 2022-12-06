@@ -125,3 +125,7 @@ func (date DateTime) SetIsDate(isDate bool) DateTime {
 	date.isDate = isDate
 	return date
 }
+
+func (date DateTime) IsDate() bool {
+	return date.isDate
+}

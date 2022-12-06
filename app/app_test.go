@@ -2,14 +2,11 @@ package app
 
 import (
 	"fmt"
-	"github.com/houyanzu/work-box/lib/httptool"
+	"github.com/fbsobreira/gotron-sdk/pkg/address"
 	"testing"
 )
 
 func TestTron(t *testing.T) {
-	resp, code, err := httptool.Get("https://api.shasta.trongrid.io/wallet/getnowblock")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(code, string(resp))
+	addr := address.HexToAddress("0x41b7E6543D10f192dBD83A285FFa074Dbf37a541E3")
+	fmt.Println(addr.String())
 }

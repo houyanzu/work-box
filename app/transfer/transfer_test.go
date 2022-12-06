@@ -9,7 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/fbsobreira/gotron-sdk/pkg/address"
+	"github.com/fbsobreira/gotron-sdk/pkg/client"
+	common2 "github.com/fbsobreira/gotron-sdk/pkg/common"
+	"github.com/fbsobreira/gotron-sdk/pkg/keystore"
+	"github.com/fbsobreira/gotron-sdk/pkg/proto/core"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
+	"github.com/houyanzu/work-box/lib/tron"
+	"google.golang.org/grpc"
 	"math/big"
 	"testing"
 )
@@ -92,4 +99,131 @@ func SingleTransfer2(token string, to string, amount *big.Int) (hash string, err
 	}
 	hash = tx.Hash().Hex()
 	return
+}
+
+var (
+	conn                  *client.GrpcClient
+	apiKey                = "1dd9e753-141c-4389-9d50-30b9eefcb6d2"
+	tronAddress           = "grpc.trongrid.io:50051"
+	accountAddress        = "TPpw7soPWEDQWXPCGUMagYPryaWrYR5b3b"
+	accountAddressWitness = "TGj1Ej1qRzL9feLTLhjwgxXF4Ct6GTWg2U"
+)
+
+func TestTron(t *testing.T) {
+	ks := keystore.ForPath("D:\\work\\gowork\\work-box\\app\\transfer")
+	accs := ks.Accounts()
+	fmt.Println("")
+	ks.HasAddress(address.HexToAddress(""))
+
+	opts := make([]grpc.DialOption, 0)
+	opts = append(opts, grpc.WithInsecure())
+
+	conn = client.NewGrpcClient(tronAddress)
+
+	if err := conn.Start(opts...); err != nil {
+		_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+	}
+
+	err := conn.SetAPIKey(apiKey)
+	if err != nil {
+		panic(err)
+	}
+
+	tx, err := conn.Transfer("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TTp3xVVgsg4rfSKB5xLfcrp85n5HKvKcny", 1)
+	if err != nil {
+		panic(err)
+	}
+	ks.Unlock(accs[0], "0123456789123456")
+	signedTx, err := ks.SignTx(accs[0], tx.Transaction)
+	if err != nil {
+		panic(err)
+	}
+	res, err := conn.Broadcast(signedTx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(res)
+}
+
+func TestTronCon(t *testing.T) {
+	//ks := keystore.ForPath("D:\\work\\gowork\\work-box\\app\\transfer")
+	//fmt.Println("")
+
+	opts := make([]grpc.DialOption, 0)
+	opts = append(opts, grpc.WithInsecure())
+
+	conn = client.NewGrpcClient(tronAddress)
+
+	if err := conn.Start(opts...); err != nil {
+		_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+	}
+
+	err := conn.SetAPIKey(apiKey)
+	if err != nil {
+		panic(err)
+	}
+
+	tx, err := conn.TRC20Send("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TQs81QzrVaSnG4UjVQ6aJgZS3q6VKSRJS4", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", big.NewInt(100000), 15000000)
+	if err != nil {
+		panic(err)
+	}
+	//addr, err := address.Base58ToAddress("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//err = ks.Unlock(keystore.Account{Address: addr}, "0123456789123456")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//signedTx, err := tron.SignTx("e4d2040fe8156013a9a3635e3aeba04443a62077fc0fbf221e945eed91184b7b", tx.Transaction)
+	signedTx, err := tron.SignTx("1cb80aad8b187aec43796cf0a382ac9e75c8703866a4bfd0d5134b387008f2d5", tx.Transaction)
+	if err != nil {
+		panic(err)
+	}
+	_, err = conn.Broadcast(signedTx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(common2.BytesToHexString(tx.GetTxid()))
+}
+
+func TestConvert(t *testing.T) {
+	fmt.Println(tron.HexToTronAddress("0xb7E6543D10f192dBD83A285FFa074Dbf37a541E3"))
+	fmt.Println(tron.TronAddressToHex("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw"))
+}
+
+func TestEn(t *testing.T) {
+	opts := make([]grpc.DialOption, 0)
+	opts = append(opts, grpc.WithInsecure())
+
+	conn = client.NewGrpcClient(tronAddress)
+
+	if err := conn.Start(opts...); err != nil {
+		_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+	}
+
+	err := conn.SetAPIKey(apiKey)
+	if err != nil {
+		panic(err)
+	}
+	tx, err := conn.FreezeBalance("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TTp3xVVgsg4rfSKB5xLfcrp85n5HKvKcny", core.ResourceCode_ENERGY, 10000000)
+	if err != nil {
+		panic(err)
+	}
+	//addr, err := address.Base58ToAddress("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//err = ks.Unlock(keystore.Account{Address: addr}, "0123456789123456")
+	//if err != nil {
+	//	panic(err)
+	//}
+	signedTx, err := tron.SignTx("1cb80aad8b187aec43796cf0a382ac9e75c8703866a4bfd0d5134b387008f2d5", tx.Transaction)
+	if err != nil {
+		panic(err)
+	}
+	_, err = conn.Broadcast(signedTx)
+	if err != nil {
+		panic(err)
+	}
 }

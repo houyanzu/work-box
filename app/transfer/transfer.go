@@ -349,6 +349,10 @@ func SingleTransfer(chainDBID uint, token string, to string, amount *big.Int, pr
 	if err != nil {
 		return
 	}
+	if chain.Data.Name == "Tron" {
+
+		return
+	}
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
