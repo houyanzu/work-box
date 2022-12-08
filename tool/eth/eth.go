@@ -11,11 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	tronClient "github.com/fbsobreira/gotron-sdk/pkg/client"
 	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	"github.com/houyanzu/work-box/lib/contract/unipair"
 	"github.com/houyanzu/work-box/lib/httptool"
 	"github.com/shopspring/decimal"
+	"google.golang.org/grpc"
 	"log"
 	"math/big"
 	"regexp"
@@ -78,21 +80,47 @@ func BalanceOf(chainDBID uint, token, wallet string) (balance decimal.Decimal, e
 		return
 	}
 	balance = decimal.Zero
-	client, err := ethclient.Dial(chain.Data.Rpc)
-	if err != nil {
-		return
-	}
+	if chain.Data.Name == "Tron" {
+		opts := make([]grpc.DialOption, 0)
+		opts = append(opts, grpc.WithInsecure())
 
-	coin, err := standardcoin.NewStandardcoin(common.HexToAddress(token), client)
-	if err != nil {
-		return
-	}
+		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
 
-	ba, err := coin.BalanceOf(nil, common.HexToAddress(wallet))
-	if err != nil {
-		return
+		if err := conn.Start(opts...); err != nil {
+			_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+		}
+
+		err = conn.SetAPIKey(chain.Data.ApiKey)
+		if err != nil {
+			return
+		}
+
+		var ba *big.Int
+		ba, err = conn.TRC20ContractBalance(wallet, token)
+		if err != nil {
+			return
+		}
+		balance = decimal.NewFromBigInt(ba, 0)
+	} else {
+		client, errr := ethclient.Dial(chain.Data.Rpc)
+		if errr != nil {
+			err = errr
+			return
+		}
+
+		coin, errr := standardcoin.NewStandardcoin(common.HexToAddress(token), client)
+		if errr != nil {
+			err = errr
+			return
+		}
+
+		ba, errr := coin.BalanceOf(nil, common.HexToAddress(wallet))
+		if errr != nil {
+			err = errr
+			return
+		}
+		balance = decimal.NewFromBigInt(ba, 0)
 	}
-	balance = decimal.NewFromBigInt(ba, 0)
 	return
 }
 
@@ -217,20 +245,47 @@ func GetTxStatus(chainDBID uint, hash string) (status uint64, err error) {
 		err = errors.New("chain not found")
 		return
 	}
-	client, err := ethclient.Dial(chain.Data.Rpc)
-	if err != nil {
-		return
+	if chain.Data.Name == "Tron" {
+		opts := make([]grpc.DialOption, 0)
+		opts = append(opts, grpc.WithInsecure())
+
+		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+
+		if errr := conn.Start(opts...); errr != nil {
+			err = errr
+			return
+		}
+
+		err = conn.SetAPIKey(chain.Data.ApiKey)
+		if err != nil {
+			return
+		}
+
+		trx, errr := conn.GetTransactionByID(hash)
+		if errr != nil {
+			err = errr
+			return
+		}
+		status = uint64(trx.Ret[0].GetContractRet())
+	} else {
+		client, errr := ethclient.Dial(chain.Data.Rpc)
+		if errr != nil {
+			err = errr
+			return
+		}
+		txHash := common.HexToHash(hash)
+		tx, _, errr := client.TransactionByHash(context.Background(), txHash)
+		if errr != nil {
+			err = errr
+			return
+		}
+		receipt, errr := client.TransactionReceipt(context.Background(), tx.Hash())
+		if errr != nil {
+			err = errr
+			return
+		}
+		status = receipt.Status
 	}
-	txHash := common.HexToHash(hash)
-	tx, _, err := client.TransactionByHash(context.Background(), txHash)
-	if err != nil {
-		return
-	}
-	receipt, err := client.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		return
-	}
-	status = receipt.Status
 	return
 }
 

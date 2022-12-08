@@ -8,6 +8,8 @@ require (
 	github.com/gin-gonic/gin v1.8.0
 	github.com/houyanzu/cache v0.0.0-20220315083700-2836ca008e50
 	github.com/shopspring/decimal v1.3.1
+	google.golang.org/grpc v1.37.0
+	google.golang.org/protobuf v1.28.0
 	gorm.io/driver/mysql v1.3.4
 	gorm.io/gorm v1.23.6
 )
@@ -56,8 +58,6 @@ require (
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
-	google.golang.org/grpc v1.37.0 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

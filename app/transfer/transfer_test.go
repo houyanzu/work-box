@@ -3,6 +3,7 @@ package transfer
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -163,7 +164,7 @@ func TestTronCon(t *testing.T) {
 		panic(err)
 	}
 
-	tx, err := conn.TRC20Send("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TQs81QzrVaSnG4UjVQ6aJgZS3q6VKSRJS4", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", big.NewInt(100000), 15000000)
+	tx, err := conn.TRC20Send("TTp3xVVgsg4rfSKB5xLfcrp85n5HKvKcny", "TQs81QzrVaSnG4UjVQ6aJgZS3q6VKSRJS4", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", big.NewInt(100000), 15000000)
 	if err != nil {
 		panic(err)
 	}
@@ -175,8 +176,8 @@ func TestTronCon(t *testing.T) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	//signedTx, err := tron.SignTx("e4d2040fe8156013a9a3635e3aeba04443a62077fc0fbf221e945eed91184b7b", tx.Transaction)
-	signedTx, err := tron.SignTx("1cb80aad8b187aec43796cf0a382ac9e75c8703866a4bfd0d5134b387008f2d5", tx.Transaction)
+	signedTx, err := tron.SignTx("", tx.Transaction)
+	//signedTx, err := tron.SignTx("", tx.Transaction)
 	if err != nil {
 		panic(err)
 	}
@@ -206,7 +207,7 @@ func TestEn(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	tx, err := conn.FreezeBalance("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TTp3xVVgsg4rfSKB5xLfcrp85n5HKvKcny", core.ResourceCode_ENERGY, 10000000)
+	tx, err := conn.FreezeBalance("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TTp3xVVgsg4rfSKB5xLfcrp85n5HKvKcny", core.ResourceCode_ENERGY, 50000000)
 	if err != nil {
 		panic(err)
 	}
@@ -218,7 +219,7 @@ func TestEn(t *testing.T) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	signedTx, err := tron.SignTx("1cb80aad8b187aec43796cf0a382ac9e75c8703866a4bfd0d5134b387008f2d5", tx.Transaction)
+	signedTx, err := tron.SignTx("", tx.Transaction)
 	if err != nil {
 		panic(err)
 	}
@@ -226,4 +227,58 @@ func TestEn(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestBa(t *testing.T) {
+	opts := make([]grpc.DialOption, 0)
+	opts = append(opts, grpc.WithInsecure())
+
+	conn = client.NewGrpcClient(tronAddress)
+
+	if err := conn.Start(opts...); err != nil {
+		_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+	}
+
+	err := conn.SetAPIKey(apiKey)
+	if err != nil {
+		panic(err)
+	}
+
+	balance, err := conn.TRC20ContractBalance("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+	if err != nil {
+		panic(err)
+	}
+
+	account, err := conn.GetAccount("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("USDT:", balance)
+	fmt.Println("TRX:", account.Balance)
+	fmt.Println("frozen_TRX:", account.Frozen[0].FrozenBalance)
+}
+
+func TestTrx(t *testing.T) {
+	opts := make([]grpc.DialOption, 0)
+	opts = append(opts, grpc.WithInsecure())
+
+	conn = client.NewGrpcClient(tronAddress)
+
+	if err := conn.Start(opts...); err != nil {
+		_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+	}
+
+	err := conn.SetAPIKey(apiKey)
+	if err != nil {
+		panic(err)
+	}
+
+	//trx, err := conn.GetTransactionByID("")
+	trx, err := conn.GetTransactionByID("")
+	if err != nil {
+		panic(err)
+	}
+	js, err := json.Marshal(trx)
+	fmt.Println(string(js))
 }

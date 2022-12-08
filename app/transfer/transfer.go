@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	tronClient "github.com/fbsobreira/gotron-sdk/pkg/client"
+	common2 "github.com/fbsobreira/gotron-sdk/pkg/common"
 	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/database/models/keys"
 	"github.com/houyanzu/work-box/database/models/locktransferdetails"
@@ -21,8 +23,10 @@ import (
 	crypto2 "github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/lib/crypto/aes"
 	"github.com/houyanzu/work-box/lib/mytime"
+	"github.com/houyanzu/work-box/lib/tron"
 	"github.com/houyanzu/work-box/tool/eth"
 	"github.com/shopspring/decimal"
+	"google.golang.org/grpc"
 	"math/big"
 	"strings"
 	"time"
@@ -30,6 +34,7 @@ import (
 
 var privateKeyStr string
 var FromAddress string
+var TronFromAddress string
 var GasLimit = uint64(100000)
 
 var CheckBalance = false
@@ -64,6 +69,7 @@ func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 		return
 	}
 	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	TronFromAddress, _ = tron.HexToTronAddress(FromAddress)
 	return
 }
 
@@ -101,6 +107,7 @@ func InitDBTrans(priKeyID uint, password []byte, de crypto2.Decoder) (e error) {
 		return
 	}
 	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	TronFromAddress, _ = tron.HexToTronAddress(FromAddress)
 	return
 }
 
@@ -110,12 +117,14 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		err = errors.New("chain not found")
 		return
 	}
+	if chain.Data.Name == "Tron" {
+		limit = 1
+	}
 	pending := transferrecords.New(nil).InitPending(chainDBID, FromAddress, module)
 	if pending.Exists() {
 		var status uint64
 		status, err = eth.GetTxStatus(chainDBID, pending.Data.Hash)
 		if err != nil {
-			//TODO:覆盖操作
 			exTime := pending.Data.CreateTime.Add(30 * time.Minute)
 			now := mytime.NewFromNow()
 			if exTime.Before(now) {
@@ -136,7 +145,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 			} else if pending.Data.Type == 2 {
 				locktransferdetails.New(nil).SetSuccess(pending.Data.ID)
 			}
-		} else if status == 0 {
+		} else {
 			pending.SetFail()
 			if pending.Data.Type == 1 {
 				transferdetails.New(nil).SetFail(pending.Data.ID)
@@ -149,6 +158,67 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 	waitingList := transferdetails.New(nil).InitWaitingList(chainDBID, limit, module)
 	length := len(waitingList.List)
 	if length == 0 {
+		return
+	}
+	if chain.Data.Name == "Tron" {
+		opts := make([]grpc.DialOption, 0)
+		opts = append(opts, grpc.WithInsecure())
+
+		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+
+		if err = conn.Start(opts...); err != nil {
+			return
+		}
+
+		err = conn.SetAPIKey(chain.Data.ApiKey)
+		if err != nil {
+			return
+		}
+
+		if CheckBalance {
+			balance, errr := eth.BalanceOf(chainDBID, waitingList.List[0].Token, TronFromAddress)
+			if errr != nil {
+				err = errr
+				return
+			}
+			if balance.LessThan(waitingList.List[0].Amount) {
+				err = errors.New("insufficient balance: " + waitingList.List[0].Token)
+				return
+			}
+		}
+
+		tronTo, _ := tron.HexToTronAddress(waitingList.List[0].To)
+		tx, errr := conn.TRC20Send(TronFromAddress, tronTo, waitingList.List[0].Token, waitingList.List[0].Amount.BigInt(), 15000000)
+		if errr != nil {
+			err = errr
+			return
+		}
+		if waitingList.List[0].Token == eth.EthAddress {
+			tx, err = conn.Transfer(TronFromAddress, tronTo, waitingList.List[0].Amount.IntPart())
+			if err != nil {
+				panic(err)
+			}
+		}
+		signedTx, errr := tron.SignTx(privateKeyStr, tx.Transaction)
+		if errr != nil {
+			err = errr
+			return
+		}
+		_, err = conn.Broadcast(signedTx)
+		if err != nil {
+			return
+		}
+
+		tr := transferrecords.New(nil)
+		tr.Data.Type = 1
+		tr.Data.ChainDbId = chainDBID
+		tr.Data.From = TronFromAddress
+		tr.Data.Hash = common2.BytesToHexString(tx.GetTxid())
+		tr.Data.Nonce = 0
+		tr.Data.Module = module
+		tr.Add()
+
+		transferdetails.New(nil).SetExec([]uint{waitingList.List[0].ID}, tr.Data.ID)
 		return
 	}
 
@@ -175,10 +245,12 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 	})
 	if CheckBalance {
 		for token, amount := range transferTokens {
-			ba, _ := eth.BalanceOf(chainDBID, token, FromAddress)
-			if ba.LessThan(amount) {
-				err = errors.New("insufficient balance: " + token)
-				return
+			if token != eth.EthAddress {
+				ba, _ := eth.BalanceOf(chainDBID, token, FromAddress)
+				if ba.LessThan(amount) {
+					err = errors.New("insufficient balance: " + token)
+					return
+				}
 			}
 		}
 	}
@@ -337,14 +409,72 @@ func SingleTransfer(chainDBID uint, token string, to string, amount *big.Int, pr
 		err = errors.New("chain not found")
 		return
 	}
+
+	if priKey == "" {
+		priKey = privateKeyStr
+	} else {
+		privateKey, e := crypto.HexToECDSA(priKey)
+		if e != nil {
+			return
+		}
+
+		publicKey := privateKey.Public()
+		publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+		if !ok {
+			e = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+			return
+		}
+		FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+		TronFromAddress, _ = tron.HexToTronAddress(FromAddress)
+	}
+	if chain.Data.Name == "Tron" {
+		opts := make([]grpc.DialOption, 0)
+		opts = append(opts, grpc.WithInsecure())
+
+		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+
+		if err = conn.Start(opts...); err != nil {
+			return
+		}
+
+		err = conn.SetAPIKey(chain.Data.ApiKey)
+		if err != nil {
+			return
+		}
+
+		tronTo := to
+		if tronTo[:2] == "0x" {
+			tronTo, _ = tron.HexToTronAddress(to)
+		}
+
+		tx, errr := conn.TRC20Send(TronFromAddress, tronTo, token, amount, 15000000)
+		if errr != nil {
+			err = errr
+			return
+		}
+		if token == eth.EthAddress {
+			tx, err = conn.Transfer(TronFromAddress, tronTo, amount.Int64())
+			if err != nil {
+				panic(err)
+			}
+		}
+		signedTx, errr := tron.SignTx(privateKeyStr, tx.Transaction)
+		if errr != nil {
+			err = errr
+			return
+		}
+		_, err = conn.Broadcast(signedTx)
+		if err != nil {
+			return
+		}
+		hash = common2.BytesToHexString(tx.GetTxid())
+		return
+	}
 	client, err := ethclient.Dial(chain.Data.Rpc)
 	if err != nil {
 		return
 	}
 
-	if priKey == "" {
-		priKey = privateKeyStr
-	}
 	privateKey, err := crypto.HexToECDSA(priKey)
 	if err != nil {
 		return
