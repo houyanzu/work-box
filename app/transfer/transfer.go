@@ -447,18 +447,19 @@ func SingleTransfer(chainDBID uint, token string, to string, amount *big.Int, pr
 			tronTo, _ = tron.HexToTronAddress(to)
 		}
 
-		tx, errr := conn.TRC20Send(TronFromAddress, tronTo, token, amount, 15000000)
+		tx, errr := conn.Transfer(TronFromAddress, tronTo, amount.Int64())
 		if errr != nil {
 			err = errr
 			return
 		}
-		if token == eth.EthAddress {
-			tx, err = conn.Transfer(TronFromAddress, tronTo, amount.Int64())
+
+		if token != eth.EthAddress {
+			tx, err = conn.TRC20Send(TronFromAddress, tronTo, token, amount, 15000000)
 			if err != nil {
-				panic(err)
+				return
 			}
 		}
-		signedTx, errr := tron.SignTx(privateKeyStr, tx.Transaction)
+		signedTx, errr := tron.SignTx(priKey, tx.Transaction)
 		if errr != nil {
 			err = errr
 			return

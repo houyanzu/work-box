@@ -3,7 +3,6 @@ package transfer
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -189,8 +188,8 @@ func TestTronCon(t *testing.T) {
 }
 
 func TestConvert(t *testing.T) {
-	fmt.Println(tron.HexToTronAddress("0xb7E6543D10f192dBD83A285FFa074Dbf37a541E3"))
-	fmt.Println(tron.TronAddressToHex("TSjaahyvbDjFeGpESg3S99WsNEroCnrHGw"))
+	fmt.Println(tron.HexToTronAddress("0xa1c17d154b123665ce05ad8e6a581d3499a5c49b"))
+	fmt.Println(tron.TronAddressToHex("TQiVamUvkCkSgAvb1irTYCD1AbeM4uVfVa"))
 }
 
 func TestEn(t *testing.T) {
@@ -275,10 +274,9 @@ func TestTrx(t *testing.T) {
 	}
 
 	//trx, err := conn.GetTransactionByID("")
-	trx, err := conn.GetTransactionByID("")
+	trx, err := conn.GetTransactionByID("0988b7f18bdeba4cab5ae4cd352800983154d08b6ac743690298c4f8a407c0a0")
 	if err != nil {
 		panic(err)
 	}
-	js, err := json.Marshal(trx)
-	fmt.Println(string(js))
+	fmt.Println(trx.Ret[0].ContractRet)
 }

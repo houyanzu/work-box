@@ -106,7 +106,6 @@ func MonitorTron(chainDBID uint, contract string, endBlockTimestamp uint64, even
 			url += "&fingerprint=" + fingerprint
 			httptool.Header = make(map[string]string)
 			httptool.Header["TRON_PRO_API_KEY"] = chain.Data.ApiKey
-			fmt.Println(url)
 			resp, code, errr := httptool.Get(url, 20*time.Second)
 			if errr != nil {
 				err = errr
@@ -133,7 +132,6 @@ func MonitorTron(chainDBID uint, contract string, endBlockTimestamp uint64, even
 				break
 			}
 		}
-		fmt.Println(len(res.logs))
 		lastBlockTimestamp = end
 	}
 	res.contract = contract
