@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -117,10 +118,12 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		err = errors.New("chain not found")
 		return
 	}
+	fromAddress := FromAddress
 	if chain.Data.Name == "Tron" {
 		limit = 1
+		fromAddress, _ = tron.HexToTronAddress(fromAddress)
 	}
-	pending := transferrecords.New(nil).InitPending(chainDBID, FromAddress, module)
+	pending := transferrecords.New(nil).InitPending(chainDBID, fromAddress, module)
 	if pending.Exists() {
 		var status uint64
 		status, err = eth.GetTxStatus(chainDBID, pending.Data.Hash)
@@ -138,6 +141,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 			}
 			return
 		}
+		fmt.Println(status, "-------------")
 		if status == 1 {
 			pending.SetSuccess()
 			if pending.Data.Type == 1 {
@@ -176,7 +180,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		}
 
 		if CheckBalance {
-			balance, errr := eth.BalanceOf(chainDBID, waitingList.List[0].Token, TronFromAddress)
+			balance, errr := eth.BalanceOf(chainDBID, waitingList.List[0].Token, fromAddress)
 			if errr != nil {
 				err = errr
 				return
@@ -187,16 +191,20 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 			}
 		}
 
-		tronTo, _ := tron.HexToTronAddress(waitingList.List[0].To)
-		tx, errr := conn.TRC20Send(TronFromAddress, tronTo, waitingList.List[0].Token, waitingList.List[0].Amount.BigInt(), 15000000)
+		tronTo := waitingList.List[0].To
+		if tronTo[:2] == "0x" {
+			tronTo, _ = tron.HexToTronAddress(tronTo)
+		}
+		tx, errr := conn.Transfer(fromAddress, tronTo, waitingList.List[0].Amount.IntPart())
 		if errr != nil {
 			err = errr
 			return
 		}
-		if waitingList.List[0].Token == eth.EthAddress {
-			tx, err = conn.Transfer(TronFromAddress, tronTo, waitingList.List[0].Amount.IntPart())
+
+		if waitingList.List[0].Token != eth.EthAddress {
+			tx, err = conn.TRC20Send(fromAddress, tronTo, waitingList.List[0].Token, waitingList.List[0].Amount.BigInt(), 15000000)
 			if err != nil {
-				panic(err)
+				return
 			}
 		}
 		signedTx, errr := tron.SignTx(privateKeyStr, tx.Transaction)
@@ -212,7 +220,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		tr := transferrecords.New(nil)
 		tr.Data.Type = 1
 		tr.Data.ChainDbId = chainDBID
-		tr.Data.From = TronFromAddress
+		tr.Data.From = fromAddress
 		tr.Data.Hash = common2.BytesToHexString(tx.GetTxid())
 		tr.Data.Nonce = 0
 		tr.Data.Module = module
@@ -246,7 +254,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 	if CheckBalance {
 		for token, amount := range transferTokens {
 			if token != eth.EthAddress {
-				ba, _ := eth.BalanceOf(chainDBID, token, FromAddress)
+				ba, _ := eth.BalanceOf(chainDBID, token, fromAddress)
 				if ba.LessThan(amount) {
 					err = errors.New("insufficient balance: " + token)
 					return
@@ -263,7 +271,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 	if err != nil {
 		return
 	}
-	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(FromAddress), nil)
+	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(fromAddress), nil)
 	if err != nil {
 		return
 	}
@@ -295,7 +303,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 	tr := transferrecords.New(nil)
 	tr.Data.Type = 1
 	tr.Data.ChainDbId = chainDBID
-	tr.Data.From = FromAddress
+	tr.Data.From = fromAddress
 	tr.Data.Hash = hash
 	tr.Data.Nonce = nonce
 	tr.Data.Module = module
@@ -478,10 +486,6 @@ func SingleTransfer(chainDBID uint, token string, to string, amount *big.Int, pr
 
 	privateKey, err := crypto.HexToECDSA(priKey)
 	if err != nil {
-		return
-	}
-	if chain.Data.Name == "Tron" {
-
 		return
 	}
 	publicKey := privateKey.Public()

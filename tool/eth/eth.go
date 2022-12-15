@@ -16,6 +16,7 @@ import (
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	"github.com/houyanzu/work-box/lib/contract/unipair"
 	"github.com/houyanzu/work-box/lib/httptool"
+	"github.com/houyanzu/work-box/lib/tron"
 	"github.com/shopspring/decimal"
 	"google.golang.org/grpc"
 	"log"
@@ -81,6 +82,9 @@ func BalanceOf(chainDBID uint, token, wallet string) (balance decimal.Decimal, e
 	}
 	balance = decimal.Zero
 	if chain.Data.Name == "Tron" {
+		if wallet[:2] == "0x" {
+			wallet, _ = tron.HexToTronAddress(wallet)
+		}
 		opts := make([]grpc.DialOption, 0)
 		opts = append(opts, grpc.WithInsecure())
 
@@ -222,6 +226,34 @@ func BalanceAt(chainDBID uint, addr string) (balance decimal.Decimal, err error)
 	chain := chains.New(nil).InitByID(chainDBID)
 	if !chain.Exists() {
 		err = errors.New("chain not found")
+		return
+	}
+	if chain.Data.Name == "Tron" {
+		if addr[:2] == "0x" {
+			addr, _ = tron.HexToTronAddress(addr)
+		}
+		opts := make([]grpc.DialOption, 0)
+		opts = append(opts, grpc.WithInsecure())
+
+		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+
+		if err := conn.Start(opts...); err != nil {
+			_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
+		}
+
+		err = conn.SetAPIKey(chain.Data.ApiKey)
+		if err != nil {
+			return
+		}
+
+		acc, errr := conn.GetAccount(addr)
+		if errr != nil {
+			if errr.Error() != "account not found" {
+				err = errr
+				return
+			}
+		}
+		balance = decimal.NewFromInt(acc.Balance)
 		return
 	}
 	client, err := ethclient.Dial(chain.Data.Rpc)

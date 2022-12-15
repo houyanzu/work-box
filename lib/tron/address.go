@@ -1,15 +1,13 @@
 package tron
 
 import (
-	"errors"
 	"github.com/fbsobreira/gotron-sdk/pkg/address"
-	"github.com/houyanzu/work-box/tool/eth"
 )
 
 func HexToTronAddress(hex string) (string, error) {
-	if !eth.IsAddress(hex) {
-		return "", errors.New("wrong hex")
-	}
+	//if !eth.IsAddress(hex) {
+	//	return "", errors.New("wrong hex")
+	//}
 
 	hex = "0x41" + hex[2:]
 	a := address.HexToAddress(hex)

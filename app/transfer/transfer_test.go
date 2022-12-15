@@ -188,7 +188,7 @@ func TestTronCon(t *testing.T) {
 }
 
 func TestConvert(t *testing.T) {
-	fmt.Println(tron.HexToTronAddress("0xbab594fd78ce7be00822d2e6bad12d7284ccd61d"))
+	fmt.Println(tron.HexToTronAddress("0xa1c17d154b123665ce05ad8e6a581d3499a5c49b"))
 	//fmt.Println(tron.TronAddressToHex("TQiVamUvkCkSgAvb1irTYCD1AbeM4uVfVa"))
 }
 
