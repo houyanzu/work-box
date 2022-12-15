@@ -3,8 +3,10 @@ package userkeysbalance
 import (
 	"fmt"
 	"github.com/houyanzu/work-box/database"
+	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/database/models/tokens"
 	"github.com/houyanzu/work-box/database/models/userkeys"
+	"github.com/houyanzu/work-box/lib/tron"
 	"github.com/houyanzu/work-box/tool/eth"
 	"github.com/shopspring/decimal"
 )
@@ -81,7 +83,12 @@ func (m *Model) InitByKeyAndToken(keyID, tokenID uint) *Model {
 func (m *Model) UpdateBalance() {
 	token := tokens.New(nil).InitById(m.Data.TokenID)
 	userKey := userkeys.New(nil).InitById(m.Data.KeyID)
-	m.Data.Balance, _ = eth.BalanceOf(m.Data.ChainDbID, token.Data.Contract, userKey.Data.Address)
+	addr := userKey.Data.Address
+	chain := chains.New(nil).InitByID(m.Data.ChainDbID)
+	if chain.Data.Name == "Tron" {
+		addr, _ = tron.HexToTronAddress(userKey.Data.Address)
+	}
+	m.Data.Balance, _ = eth.BalanceOf(m.Data.ChainDbID, token.Data.Contract, addr)
 	m.Db.Save(&m.Data)
 }
 

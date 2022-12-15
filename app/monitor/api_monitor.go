@@ -74,6 +74,7 @@ func ApiMonitor(chainDBID uint, contract string, blockDiff uint64, eventID strin
 	var logRes apiLogRes
 	err = json.Unmarshal([]byte(str), &logRes)
 	if err != nil {
+		fmt.Println(str)
 		return
 	}
 	res.logs = logRes.Result

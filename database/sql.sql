@@ -60,3 +60,7 @@ CREATE TABLE `box_collect_tokens` (
 ALTER TABLE `box_monitor_chain_record`
     MODIFY COLUMN `block_num` bigint(20) UNSIGNED NOT NULL AFTER `contract`
 ;
+
+ALTER TABLE `box_monitor_chain_record`
+    MODIFY COLUMN `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT FIRST
+;

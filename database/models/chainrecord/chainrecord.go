@@ -27,7 +27,7 @@ func (c *BoxMonitorChainRecord) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	sql := "CREATE TABLE `box_monitor_chain_record` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`chain_db_id` int(11) UNSIGNED NOT NULL DEFAULT 1,\n\t`contract` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`block_num` bigint(20) UNSIGNED NOT NULL,\n\t`event_id` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `cb`(`chain_db_id`,`contract`,`block_num`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
+	sql := "CREATE TABLE `box_monitor_chain_record` (\n\t`id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`chain_db_id` int(11) UNSIGNED NOT NULL DEFAULT 1,\n\t`contract` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`block_num` bigint(20) UNSIGNED NOT NULL,\n\t`event_id` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `cb`(`contract`,`block_num`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;"
 	return db.Exec(sql).Error
 }
 
@@ -82,6 +82,6 @@ func (m *Model) Add() {
 func GetLastBlockNum(chainDBID uint, contract string) uint64 {
 	db := database.GetDB()
 	var c BoxMonitorChainRecord
-	db.Where("chain_db_id = ? AND contract = ?", chainDBID, contract).Order("block_num desc").Take(&c)
+	db.Where("chain_db_id = ? AND contract = ?", chainDBID, strings.ToLower(contract)).Order("block_num desc").Take(&c)
 	return c.BlockNum
 }
