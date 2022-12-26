@@ -129,3 +129,8 @@ func (date DateTime) SetIsDate(isDate bool) DateTime {
 func (date DateTime) IsDate() bool {
 	return date.isDate
 }
+
+func (date DateTime) DiffDays(date2 DateTime) int {
+	d := date.data.Sub(date2.data)
+	return int(d.Hours() / 24)
+}
