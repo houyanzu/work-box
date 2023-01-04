@@ -9,16 +9,15 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/fbsobreira/gotron-sdk/pkg/address"
 	"github.com/fbsobreira/gotron-sdk/pkg/client"
 	common2 "github.com/fbsobreira/gotron-sdk/pkg/common"
-	"github.com/fbsobreira/gotron-sdk/pkg/keystore"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/core"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	"github.com/houyanzu/work-box/lib/tron"
 	"google.golang.org/grpc"
 	"math/big"
 	"testing"
+	"time"
 )
 
 func TestTransfer(t *testing.T) {
@@ -110,15 +109,30 @@ var (
 )
 
 func TestTron(t *testing.T) {
-	ks := keystore.ForPath("D:\\work\\gowork\\work-box\\app\\transfer")
-	accs := ks.Accounts()
-	fmt.Println("")
-	ks.HasAddress(address.HexToAddress(""))
+	//type con struct {
+	//	Parameter struct {
+	//		Value struct {
+	//			Amount       int    `json:"amount" gorm:"column:amount"`
+	//			OwnerAddress string `json:"owner_address" gorm:"column:owner_address"`
+	//			ToAddress    string `json:"to_address" gorm:"column:to_address"`
+	//		} `json:"value" gorm:"column:value"`
+	//		TypeUrl string `json:"type_url" gorm:"column:type_url"`
+	//	} `json:"parameter" gorm:"column:parameter"`
+	//	Type string `json:"type" gorm:"column:type"`
+	//}
+	//type rawData struct {
+	//	Contract      []con  `json:"contract" gorm:"column:contract"`
+	//	RefBlockBytes string `json:"ref_block_bytes" gorm:"column:ref_block_bytes"`
+	//	RefBlockHash  string `json:"ref_block_hash" gorm:"column:ref_block_hash"`
+	//	Expiration    int64  `json:"expiration" gorm:"column:expiration"`
+	//	Timestamp     int64  `json:"timestamp" gorm:"column:timestamp"`
+	//}
 
 	opts := make([]grpc.DialOption, 0)
 	opts = append(opts, grpc.WithInsecure())
 
 	conn = client.NewGrpcClient(tronAddress)
+	conn.SetTimeout(5 * time.Second)
 
 	if err := conn.Start(opts...); err != nil {
 		_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
@@ -133,16 +147,37 @@ func TestTron(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	ks.Unlock(accs[0], "0123456789123456")
-	signedTx, err := ks.SignTx(accs[0], tx.Transaction)
-	if err != nil {
-		panic(err)
+	signedTx, errr := tron.SignTx("1cb80aad8b187aec43796cf0a382ac9e75c8703866a4bfd0d5134b387008f2d5", tx.Transaction)
+	if errr != nil {
+		err = errr
+		return
 	}
-	res, err := conn.Broadcast(signedTx)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(res)
+	//res, err := conn.Broadcast(signedTx)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//contr := con{
+	//	Parameter: struct {
+	//		Value struct {
+	//			Amount       int    `json:"amount" gorm:"column:amount"`
+	//			OwnerAddress string `json:"owner_address" gorm:"column:owner_address"`
+	//			ToAddress    string `json:"to_address" gorm:"column:to_address"`
+	//		} `json:"value" gorm:"column:value"`
+	//		TypeUrl string `json:"type_url" gorm:"column:type_url"`
+	//	}{},
+	//	Type: "",
+	//}
+	//rawDatas := rawData{
+	//	Contract:      nil,
+	//	RefBlockBytes: "",
+	//	RefBlockHash:  "",
+	//	Expiration:    0,
+	//	Timestamp:     0,
+	//}
+	fmt.Println(signedTx.String())
+	//js, _ := json.Marshal(&signedTx)
+	//httptool.PostJSON("https://api.trongrid.io/wallet/broadcasttransaction", signedTx)
+	//fmt.Println(res)
 }
 
 func TestTronCon(t *testing.T) {

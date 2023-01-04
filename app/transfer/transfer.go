@@ -172,6 +172,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		opts = append(opts, grpc.WithInsecure())
 
 		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+		conn.SetTimeout(5 * time.Second)
 
 		if err = conn.Start(opts...); err != nil {
 			return
