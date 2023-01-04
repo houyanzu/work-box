@@ -147,7 +147,7 @@ func TestTron(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	signedTx, errr := tron.SignTx("1cb80aad8b187aec43796cf0a382ac9e75c8703866a4bfd0d5134b387008f2d5", tx.Transaction)
+	signedTx, errr := tron.SignTx("", tx.Transaction)
 	if errr != nil {
 		err = errr
 		return
