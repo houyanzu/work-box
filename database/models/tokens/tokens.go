@@ -68,6 +68,11 @@ func (m *Model) InitById(id uint) *Model {
 	return m
 }
 
+func (m *Model) InitByContract(contract string) *Model {
+	m.Db.Where("contract = ?", strings.ToLower(contract)).Take(&m.Data)
+	return m
+}
+
 func (m *Model) Add() {
 	m.Db.Create(&m.Data)
 }
@@ -86,4 +91,8 @@ func (m *Model) Foreach(f func(index int, m *Model)) {
 		mm := m.InitByData(v)
 		f(k, mm)
 	}
+}
+
+func (m *Model) Exists() bool {
+	return m.Data.ID > 0
 }
