@@ -165,8 +165,8 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		return
 	}
 	if chain.Data.Name == "Tron" {
-		if waitingList.Data.Token[:2] == "0x" {
-			waitingList.Data.Token, _ = tron.HexToTronAddress(waitingList.Data.Token)
+		if waitingList.List[0].Token[:2] == "0x" {
+			waitingList.List[0].Token, _ = tron.HexToTronAddress(waitingList.List[0].Token)
 		}
 		opts := make([]grpc.DialOption, 0)
 		opts = append(opts, grpc.WithInsecure())
