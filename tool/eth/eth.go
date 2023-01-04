@@ -253,6 +253,10 @@ func BalanceAt(chainDBID uint, addr string) (balance decimal.Decimal, err error)
 				return
 			}
 		}
+		if acc == nil {
+			balance = decimal.Zero
+			return
+		}
 		balance = decimal.NewFromInt(acc.Balance)
 		return
 	}

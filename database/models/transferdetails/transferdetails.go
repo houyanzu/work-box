@@ -3,6 +3,7 @@ package transferdetails
 import (
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/lib/mytime"
+	"github.com/houyanzu/work-box/lib/tron"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"strings"
@@ -23,7 +24,13 @@ type BoxTransferDetails struct {
 var haveTable = false
 
 func (c *BoxTransferDetails) BeforeCreate(tx *gorm.DB) error {
+	if c.Token[:1] == "T" {
+		c.Token, _ = tron.TronAddressToHex(c.Token)
+	}
 	c.Token = strings.ToLower(c.Token)
+	if c.To[:1] == "T" {
+		c.To, _ = tron.TronAddressToHex(c.To)
+	}
 	c.To = strings.ToLower(c.To)
 	c.Status = 0
 	c.CreateTime = mytime.NewFromNow()
