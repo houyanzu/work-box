@@ -165,6 +165,34 @@ func GetLoginToken(userID uint, address string, alone bool) (token string, err e
 	return
 }
 
+func getAdminLoginToken(userId uint) string {
+	userIdStr := fmt.Sprintf("%d", userId)
+	oldTokenExist := cache.IsExist(userIdStr + "admin_login")
+	if oldTokenExist {
+		oldTokenByte, _ := cache.Get(userIdStr + "admin_login").([]byte)
+		_ = cache.Delete("admin_" + string(oldTokenByte))
+		_ = cache.Delete(userIdStr + "admin_login")
+	}
+
+	token := ""
+	had := false
+	for i := 0; i < 5; i++ {
+		token = crypto.Sha1Str(fmt.Sprintf("%d", time.Now().UnixNano()) + userIdStr)
+		had = cache.IsExist(token)
+		if !had {
+			break
+		}
+	}
+
+	if had {
+		return ""
+	}
+
+	_ = cache.Set(userIdStr+"admin_login", token, 3600)
+	_ = cache.Set("admin_"+token, userId, 3600)
+	return token
+}
+
 func GetUserId(c *gin.Context) uint {
 	userIdInterface, _ := c.Get("userId")
 	userIdInt, _ := userIdInterface.(int64)
