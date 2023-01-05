@@ -89,6 +89,7 @@ func BalanceOf(chainDBID uint, token, wallet string) (balance decimal.Decimal, e
 		opts = append(opts, grpc.WithInsecure())
 
 		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+		conn.SetTimeout(5 * time.Second)
 
 		if err := conn.Start(opts...); err != nil {
 			_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
@@ -236,6 +237,7 @@ func BalanceAt(chainDBID uint, addr string) (balance decimal.Decimal, err error)
 		opts = append(opts, grpc.WithInsecure())
 
 		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+		conn.SetTimeout(5 * time.Second)
 
 		if err := conn.Start(opts...); err != nil {
 			_ = fmt.Errorf("Error connecting GRPC Client: %v", err)
@@ -286,6 +288,7 @@ func GetTxStatus(chainDBID uint, hash string) (status uint64, err error) {
 		opts = append(opts, grpc.WithInsecure())
 
 		conn := tronClient.NewGrpcClient(chain.Data.Rpc)
+		conn.SetTimeout(5 * time.Second)
 
 		if errr := conn.Start(opts...); errr != nil {
 			err = errr
