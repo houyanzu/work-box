@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	tronClient "github.com/fbsobreira/gotron-sdk/pkg/client"
 	common2 "github.com/fbsobreira/gotron-sdk/pkg/common"
+	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/houyanzu/work-box/database/models/chains"
 	"github.com/houyanzu/work-box/database/models/keys"
 	"github.com/houyanzu/work-box/database/models/locktransferdetails"
@@ -165,7 +166,8 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		return
 	}
 	if chain.Data.Name == "Tron" {
-		if waitingList.List[0].Token[:2] == "0x" {
+		fmt.Printf("%+v\n", waitingList.List[0])
+		if waitingList.List[0].Token[:2] == "0x" && waitingList.List[0].Token != eth.EthAddress {
 			waitingList.List[0].Token, _ = tron.HexToTronAddress(waitingList.List[0].Token)
 		}
 		opts := make([]grpc.DialOption, 0)
@@ -199,14 +201,14 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		if tronTo[:2] == "0x" {
 			tronTo, _ = tron.HexToTronAddress(tronTo)
 		}
-		tx, errr := conn.Transfer(fromAddress, tronTo, waitingList.List[0].Amount.IntPart())
-		if errr != nil {
-			err = errr
-			return
-		}
-
+		var tx *api.TransactionExtention
 		if waitingList.List[0].Token != eth.EthAddress {
 			tx, err = conn.TRC20Send(fromAddress, tronTo, waitingList.List[0].Token, waitingList.List[0].Amount.BigInt(), 15000000)
+			if err != nil {
+				return
+			}
+		} else {
+			tx, err = conn.Transfer(fromAddress, tronTo, waitingList.List[0].Amount.IntPart())
 			if err != nil {
 				return
 			}
@@ -458,15 +460,19 @@ func SingleTransfer(chainDBID uint, token string, to string, amount *big.Int, pr
 		if tronTo[:2] == "0x" {
 			tronTo, _ = tron.HexToTronAddress(to)
 		}
-
-		tx, errr := conn.Transfer(TronFromAddress, tronTo, amount.Int64())
-		if errr != nil {
-			err = errr
-			return
+		tronToken := token
+		if token[:2] == "0x" && token != eth.EthAddress {
+			tronToken, _ = tron.HexToTronAddress(tronToken)
 		}
 
+		var tx *api.TransactionExtention
 		if token != eth.EthAddress {
 			tx, err = conn.TRC20Send(TronFromAddress, tronTo, token, amount, 15000000)
+			if err != nil {
+				return
+			}
+		} else {
+			tx, err = conn.Transfer(TronFromAddress, tronTo, amount.Int64())
 			if err != nil {
 				return
 			}
