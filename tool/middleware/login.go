@@ -165,7 +165,7 @@ func GetLoginToken(userID uint, address string, alone bool) (token string, err e
 	return
 }
 
-func getAdminLoginToken(userId uint) string {
+func GetAdminLoginToken(userId uint) string {
 	userIdStr := fmt.Sprintf("%d", userId)
 	oldTokenExist := cache.IsExist(userIdStr + "admin_login")
 	if oldTokenExist {
