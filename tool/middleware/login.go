@@ -17,7 +17,7 @@ func Login() gin.HandlerFunc {
 }
 
 func AdminLogin() gin.HandlerFunc {
-	return loginHandler
+	return adminLoginHandler
 }
 
 func loginHandler(c *gin.Context) {
