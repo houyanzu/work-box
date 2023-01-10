@@ -8,6 +8,7 @@ import (
 	"github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/tool/cache"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -44,6 +45,9 @@ func loginHandler(c *gin.Context) {
 	}
 
 	userId, _ := cache.GetInt64(token)
+	userID := cache.Get(token)
+	t := reflect.TypeOf(userID)
+	fmt.Println(userID, t)
 	if userId <= 0 {
 		if lang == "zh" {
 			c.JSON(http.StatusOK, gin.H{

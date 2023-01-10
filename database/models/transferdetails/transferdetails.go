@@ -1,6 +1,7 @@
 package transferdetails
 
 import (
+	"errors"
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/houyanzu/work-box/lib/tron"
@@ -87,6 +88,10 @@ func (m *Model) Foreach(f func(index int, m *Model)) {
 }
 
 func (m *Model) Add() {
+	if m.Data.Amount.Equals(decimal.Zero) {
+		m.Error = errors.New("amount must be positive")
+		return
+	}
 	m.Error = m.Db.Create(&m.Data).Error
 }
 
