@@ -2,6 +2,7 @@ package httptool
 
 import (
 	"bytes"
+	"crypto/tls"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -90,7 +91,10 @@ func Get(url string, timeout time.Duration) ([]byte, int, error) {
 			req.Header.Set(k, v)
 		}
 	}
-	client := &http.Client{Timeout: timeout}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Timeout: timeout, Transport: tr}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, 0, err
