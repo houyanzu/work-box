@@ -123,8 +123,8 @@ func (m *Model) Unfreeze(value decimal.Decimal) error {
 		return errors.New("zero")
 	}
 
-	sql := fmt.Sprintf("UPDATE `box_asset` SET `freeze_balance` = `freeze_balance` - %s WHERE `id` = %d;",
-		value.String(), m.Data.ID)
+	sql := fmt.Sprintf("UPDATE `box_asset` SET `freeze_balance` = `freeze_balance` - %s WHERE `id` = %d AND `freeze_balance` >= %s;",
+		value.String(), m.Data.ID, value.String())
 	res := m.Db.Exec(sql).RowsAffected
 	if res == 0 {
 		return errors.New("exceeds")
