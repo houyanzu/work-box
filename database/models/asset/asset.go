@@ -185,6 +185,10 @@ func (m *Model) SubBalance(
 	if res == 0 {
 		return errors.New("insufficient funds")
 	}
+	m.Db.Take(&m.Data, m.Data.ID)
+	if m.Data.FreezeBalance.GreaterThan(m.Data.Balance) {
+		return errors.New("insufficient available funds")
+	}
 
 	assetRecord := assetrecord.New(m.MysqlContext)
 	assetRecord.Data.UserId = m.Data.UserId
