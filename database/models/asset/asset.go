@@ -204,6 +204,49 @@ func (m *Model) SubBalance(
 	return nil
 }
 
+func (m *Model) SubBalanceGetRecordID(
+	module string,
+	moduleId uint,
+	amount decimal.Decimal,
+	remark string,
+) (id uint, err error) {
+	if !m.Exists() {
+		err = errors.New("wrong")
+		return
+	}
+	if amount.LessThanOrEqual(decimal.Zero) {
+		err = errors.New("zero")
+		return
+	}
+
+	sql := fmt.Sprintf("UPDATE `box_asset` SET `balance` = `balance` - %s WHERE `id` = %d AND `balance` - `freeze_balance` >= %s;",
+		amount.String(), m.Data.ID, amount.String())
+	res := m.Db.Exec(sql).RowsAffected
+	if res == 0 {
+		err = errors.New("insufficient funds")
+		return
+	}
+	m.Db.Take(&m.Data, m.Data.ID)
+	if m.Data.FreezeBalance.GreaterThan(m.Data.Balance) {
+		err = errors.New("insufficient available funds")
+		return
+	}
+
+	assetRecord := assetrecord.New(m.MysqlContext)
+	assetRecord.Data.UserId = m.Data.UserId
+	assetRecord.Data.Module = module
+	assetRecord.Data.ModuleId = moduleId
+	assetRecord.Data.TokenGroupId = m.Data.TokenGroupId
+	assetRecord.Data.Symbol = m.Data.Symbol
+	assetRecord.Data.Amount = amount
+	assetRecord.Data.CreateTime = mytime.NewFromNow()
+	assetRecord.Data.Type = 2
+	assetRecord.Data.Remark = remark
+	assetRecord.Add()
+	id = assetRecord.Data.ID
+	return
+}
+
 func (m *Model) AddBalance(
 	module string,
 	moduleId uint,
@@ -219,6 +262,37 @@ func (m *Model) AddBalance(
 
 	sql := fmt.Sprintf("UPDATE `box_asset` SET `balance`  = `balance` + %s WHERE `id` = %d;",
 		amount.String(), m.Data.ID)
+	m.Db.Exec(sql)
+
+	assetRecord := assetrecord.New(m.MysqlContext)
+	assetRecord.Data.UserId = m.Data.UserId
+	assetRecord.Data.Module = module
+	assetRecord.Data.ModuleId = moduleId
+	assetRecord.Data.TokenGroupId = m.Data.TokenGroupId
+	assetRecord.Data.Symbol = m.Data.Symbol
+	assetRecord.Data.Amount = amount
+	assetRecord.Data.Remark = remark
+	assetRecord.Data.CreateTime = mytime.NewFromNow()
+	assetRecord.Data.Type = 1
+	assetRecord.Add()
+	return nil
+}
+
+func (m *Model) AddAndFreezeBalance(
+	module string,
+	moduleId uint,
+	amount decimal.Decimal,
+	remark string,
+) error {
+	if !m.Exists() {
+		return errors.New("wrong")
+	}
+	if amount.LessThanOrEqual(decimal.Zero) {
+		return errors.New("zero")
+	}
+
+	sql := fmt.Sprintf("UPDATE `box_asset` SET `balance`  = `balance` + %s, `freeze_balance` = `freeze_balance` + %s WHERE `id` = %d;",
+		amount.String(), amount.String(), m.Data.ID)
 	m.Db.Exec(sql)
 
 	assetRecord := assetrecord.New(m.MysqlContext)

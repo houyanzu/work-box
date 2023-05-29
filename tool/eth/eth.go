@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	tronClient "github.com/fbsobreira/gotron-sdk/pkg/client"
@@ -480,6 +481,36 @@ func CreateAddress() (address, privateKeyString string, err error) {
 	}
 
 	address = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	return
+}
+
+func GetLogsByHash(chainDBID uint, hash string) (logs []*types.Log, err error) {
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	if chain.Data.Name == "Tron" {
+	} else {
+		client, errr := ethclient.Dial(chain.Data.Rpc)
+		if errr != nil {
+			err = errr
+			return
+		}
+		txHash := common.HexToHash(hash)
+		tx, _, errr := client.TransactionByHash(context.Background(), txHash)
+		if errr != nil {
+			err = errr
+			return
+		}
+
+		receipt, errr := client.TransactionReceipt(context.Background(), tx.Hash())
+		if errr != nil {
+			err = errr
+			return
+		}
+		logs = receipt.Logs
+	}
 	return
 }
 
