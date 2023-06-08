@@ -1,6 +1,7 @@
 package assetrecord
 
 import (
+	"fmt"
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/shopspring/decimal"
@@ -71,5 +72,21 @@ func (m *Model) InitByData(data BoxAssetRecord) *Model {
 
 func (m *Model) InitByID(ID uint) *Model {
 	m.Db.Take(&m.Data, ID)
+	return m
+}
+
+func (m *Model) InitListByUserIDAndTokenGroupID(userID, tokenGroupID uint, modules string, assetType int8, start, limit int) *Model {
+	where := fmt.Sprintf("user_id = %d", userID)
+	if tokenGroupID > 0 {
+		where = where + fmt.Sprintf(" AND token_group_id = %d", tokenGroupID)
+	}
+	if modules != "" {
+		where = where + fmt.Sprintf(" AND module IN (%s)", modules)
+	}
+	if assetType > 0 {
+		where = where + fmt.Sprintf(" AND type = %d", assetType)
+	}
+	m.Db.Where(where).Offset(start).Limit(limit).Order("id DESC").Find(&m.List)
+	m.Db.Model(&BoxAssetRecord{}).Where(where).Count(&m.Total)
 	return m
 }

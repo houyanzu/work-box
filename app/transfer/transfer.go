@@ -75,6 +75,40 @@ func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	return
 }
 
+func InitTrans2(priKeyCt crypto2.Decoder, password []byte) (e error) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			pwdwt.New(nil).Wrong()
+			e = errors.New("wrong password")
+			return
+		}
+	}()
+	times := pwdwt.New(nil).GetTimes()
+	if times >= 5 {
+		e = errors.New("locked")
+		return
+	}
+	privateKeyStr = priKeyCt.Decode(password)
+	//privateKeyStr = privateKeyByte.ToString()
+	pwdwt.New(nil).ResetTimes()
+
+	privateKey, e := crypto.HexToECDSA(privateKeyStr)
+	if e != nil {
+		return
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		e = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	TronFromAddress, _ = tron.HexToTronAddress(FromAddress)
+	return
+}
+
 func InitDBTrans(priKeyID uint, password []byte, de crypto2.Decoder) (e error) {
 	defer func() {
 		err := recover()
