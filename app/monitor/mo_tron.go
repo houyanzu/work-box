@@ -84,9 +84,12 @@ func MonitorTron(chainDBID uint, contract string, endBlockTimestamp uint64, even
 		endBlockTimestamp = lastBlockTimestamp + 120000
 	}
 
-	nowTimestamp := time.Now().UnixMilli()
+	nowTimestamp := time.Now().UnixMilli() - 300*1000
 	if uint64(nowTimestamp) < endBlockTimestamp {
 		endBlockTimestamp = uint64(nowTimestamp)
+	}
+	if endBlockTimestamp < lastBlockTimestamp {
+		return
 	}
 
 	for lastBlockTimestamp < endBlockTimestamp {

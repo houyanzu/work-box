@@ -33,6 +33,11 @@ const (
 	DeadAddress = "0x000000000000000000000000000000000000dEaD"
 )
 
+type ClientAuth struct {
+	Client *ethclient.Client
+	Auth   *bind.TransactOpts
+}
+
 func GetClientAndAuth(chainDBID uint, priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
 	chain := chains.New(nil).InitByID(chainDBID)
 	if !chain.Exists() {
@@ -73,6 +78,67 @@ func GetClientAndAuth(chainDBID uint, priKey string, gasLimit uint64, value *big
 	auth.GasLimit = gasLimit // in units
 	auth.GasPrice = gasPrice
 	return
+}
+
+func GetClientAndAuthStruct(chainDBID uint, priKey string, gasLimit uint64, value *big.Int) (ca *ClientAuth, err error) {
+	ca = new(ClientAuth)
+	chain := chains.New(nil).InitByID(chainDBID)
+	if !chain.Exists() {
+		err = errors.New("chain not found")
+		return
+	}
+	client, err := ethclient.Dial(chain.Data.Rpc)
+	if err != nil {
+		return
+	}
+
+	privateKey, err := crypto.HexToECDSA(priKey)
+	if err != nil {
+		return
+	}
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		err = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(fromAddress), nil)
+	if err != nil {
+		return
+	}
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(int64(chain.Data.ChainID)))
+	if err != nil {
+		return
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = value       // in wei
+	auth.GasLimit = gasLimit // in units
+	auth.GasPrice = gasPrice
+
+	ca.Client = client
+	ca.Auth = auth
+	return
+}
+
+func (ca *ClientAuth) Approve(token string, spender string, value decimal.Decimal) (hash string, err error) {
+	coin, errr := standardcoin.NewStandardcoin(common.HexToAddress(token), ca.Client)
+	if errr != nil {
+		err = errr
+		return
+	}
+
+	tx, err := coin.Approve(ca.Auth, common.HexToAddress(spender), value.BigInt())
+	if err != nil {
+		return
+	}
+
+	return tx.Hash().Hex(), nil
 }
 
 func BalanceOf(chainDBID uint, token, wallet string) (balance decimal.Decimal, err error) {
