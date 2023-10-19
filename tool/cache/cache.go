@@ -23,7 +23,6 @@ func InitCache() error {
 		"key": ""
 	}`
 	//fmt.Println(redisConfig)
-	//fmt.Println(redisConfig)
 	var err error
 	ca, err = imcache.NewCache("redis", redisConfig)
 	if err != nil {

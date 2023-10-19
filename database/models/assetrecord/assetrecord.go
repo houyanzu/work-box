@@ -9,16 +9,16 @@ import (
 )
 
 type BoxAssetRecord struct {
-	ID           uint
-	UserId       uint
-	TokenGroupId uint
-	Symbol       string
-	Module       string
-	ModuleId     uint
-	Amount       decimal.Decimal
-	Remark       string
-	Type         int8
-	CreateTime   mytime.DateTime
+	ID           uint            `json:"id"`
+	UserId       uint            `json:"user_id"`
+	TokenGroupId uint            `json:"token_group_id"`
+	Symbol       string          `json:"symbol"`
+	Module       string          `json:"module"`
+	ModuleId     uint            `json:"module_id"`
+	Amount       decimal.Decimal `json:"amount"`
+	Remark       string          `json:"remark"`
+	Type         int8            `json:"type"`
+	CreateTime   mytime.DateTime `json:"create_time"`
 }
 
 var haveTable = false

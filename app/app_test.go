@@ -2,12 +2,14 @@ package app
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/shopspring/decimal"
+	"log"
 	"math/big"
 	"testing"
 )
@@ -56,4 +58,26 @@ func TestMo(t *testing.T) {
 	for _, log := range logs {
 		fmt.Println(log.Topics[0])
 	}
+}
+
+func TestKey(t *testing.T) {
+	//privateKey, _ := crypto.GenerateKey()
+	//privateKeyBytes := crypto.FromECDSA(privateKey)
+	//privateKeyString := hexutil.Encode(privateKeyBytes)[2:]
+	privateKeyString := "0000000000000000000000000000000000000000000000000000000000000100"
+	privateKey, err := crypto.HexToECDSA(privateKeyString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return
+	}
+
+	address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	fmt.Println(privateKeyString)
+	fmt.Println(address)
+	fmt.Println(len(privateKeyString))
 }

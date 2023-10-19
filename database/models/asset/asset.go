@@ -93,6 +93,11 @@ func (m *Model) InitListByUserId(userId uint) *Model {
 	return m
 }
 
+func (m *Model) InitByID(id uint) *Model {
+	m.Db.Take(&m.Data, id)
+	return m
+}
+
 func (m *Model) GetAvailableBalance() decimal.Decimal {
 	return m.Data.Balance.Sub(m.Data.FreezeBalance)
 }
@@ -308,3 +313,15 @@ func (m *Model) AddAndFreezeBalance(
 	assetRecord.Add()
 	return nil
 }
+
+//func (m *Model) SetBalance(balance decimal.Decimal) error {
+//	if !m.Exists() {
+//		return errors.New("wrong")
+//	}
+//
+//	sql := fmt.Sprintf(
+//		"UPDATE `box_asset` SET `balance` = %s, `update_time` = '%s' WHERE `id` = %d;",
+//		balance.String(), mytime.NewFromNow().Format(), m.Data.ID)
+//	m.Db.Exec(sql)
+//	return nil
+//}
