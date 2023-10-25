@@ -33,6 +33,7 @@ func (data *BoxUserKeys) BeforeCreate(tx *gorm.DB) error {
 }
 
 var haveTable = false
+var mu sync.Mutex
 
 func createTable() error {
 	db := database.GetDB()
@@ -77,6 +78,8 @@ func (m *Model) Exists() bool {
 }
 
 func (m *Model) CreateKeys(count int, password []byte, en crypto.Encoder, de crypto.Decoder) error {
+	mu.Lock()
+	defer mu.Unlock()
 	passModel := passwords.New(nil).InitByModule("USER_KEY")
 	if !passModel.Exists() {
 		passModel.Create("USER_KEY", password, en)
