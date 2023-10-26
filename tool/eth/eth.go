@@ -580,6 +580,14 @@ func GetLogsByHash(chainDBID uint, hash string) (logs []*types.Log, err error) {
 	return
 }
 
+func DecimalTo18(num decimal.Decimal, dec int8) decimal.Decimal {
+	if dec > 18 {
+		return decimal.Zero
+	}
+	res := num.Mul(decimal.New(1, int32(18-dec)))
+	return res
+}
+
 func quote(amountA, reserveA, reserveB *big.Int) *big.Int {
 	if amountA.Cmp(big.NewInt(0)) != 1 {
 		return big.NewInt(0)

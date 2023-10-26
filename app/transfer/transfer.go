@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -176,7 +175,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 			}
 			return
 		}
-		fmt.Println(status, "-------------")
+		//fmt.Println(status, "-------------")
 		if status == 1 {
 			pending.SetSuccess()
 			if pending.Data.Type == 1 {
@@ -200,7 +199,7 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		return
 	}
 	if chain.Data.Name == "Tron" {
-		fmt.Printf("%+v\n", waitingList.List[0])
+		//fmt.Printf("%+v\n", waitingList.List[0])
 		if waitingList.List[0].Token[:2] == "0x" && waitingList.List[0].Token != eth.EthAddress {
 			waitingList.List[0].Token, _ = tron.HexToTronAddress(waitingList.List[0].Token)
 		}

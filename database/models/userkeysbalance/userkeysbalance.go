@@ -70,9 +70,9 @@ func (m *Model) Exists() bool {
 }
 
 func (m *Model) InitByKeyAndToken(keyID, tokenID uint) *Model {
-	token := tokens.New(nil).InitById(tokenID)
 	m.Db.Where("key_id = ? AND token_id = ?", keyID, tokenID).Take(&m.Data)
 	if !m.Exists() {
+		token := tokens.New(nil).InitById(tokenID)
 		m.Data.KeyID = keyID
 		m.Data.TokenID = tokenID
 		m.Data.ChainDbID = token.Data.ChainDbID
@@ -88,8 +88,9 @@ func (m *Model) UpdateBalance() {
 	if chain.Data.Name == "Tron" {
 		addr, _ = tron.HexToTronAddress(userKey.Data.Address)
 	}
-	m.Data.Balance, _ = eth.BalanceOf(m.Data.ChainDbID, token.Data.Contract, addr)
-	m.Db.Save(&m.Data)
+	ba, _ := eth.BalanceOf(m.Data.ChainDbID, token.Data.Contract, addr)
+	//m.Db.Save(&m.Data)
+	m.Db.Model(&m.Data).Update("balance", ba)
 }
 
 func (m *Model) InitListByBalance(chainDBID, tokenID uint, balance decimal.Decimal) *Model {
