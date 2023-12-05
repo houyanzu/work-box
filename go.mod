@@ -6,7 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/fbsobreira/gotron-sdk v0.0.0-20221101181131-c4daceb828f0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/houyanzu/cache v0.0.0-20220315083700-2836ca008e50
+	github.com/houyanzu/cache v0.0.0-20231204110848-d2ae86e523ad
 	github.com/shopspring/decimal v1.3.1
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.30.0
