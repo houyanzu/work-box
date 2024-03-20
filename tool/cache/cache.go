@@ -17,8 +17,12 @@ var prefix string
 // InitCache .
 func InitCache() error {
 	conf := config.GetConfig()
+	conn := `"redis://` + conf.Redis.Password + `@` + conf.Redis.Host + `:` + conf.Redis.Port + `"`
+	if conf.Redis.User != "" {
+		conn = `"redis://` + conf.Redis.User + `:` + conf.Redis.Password + `@` + conf.Redis.Host + `:` + conf.Redis.Port + `"`
+	}
 	redisConfig := `{
-		"conn": "redis://` + conf.Redis.Password + `@` + conf.Redis.Host + `:` + conf.Redis.Port + `",
+		"conn": ` + conn + `,
 		"dbNum": "` + fmt.Sprintf("%v", conf.Redis.Db) + `",
 		"key": ""
 	}`
