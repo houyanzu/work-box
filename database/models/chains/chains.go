@@ -68,3 +68,8 @@ func (m *Model) InitByID(ID uint) *Model {
 func (m *Model) Exists() bool {
 	return m.Data.ID > 0
 }
+
+func (m *Model) GetAll() *Model {
+	m.Db.Order("id asc").Find(&m.List)
+	return m
+}

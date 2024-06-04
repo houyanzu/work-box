@@ -121,9 +121,9 @@ func (date DateTime) AddDate(years, months, days int) DateTime {
 	return NewFromTime(date.data.AddDate(years, months, days))
 }
 
-func (date DateTime) SetIsDate(isDate bool) DateTime {
+func (date *DateTime) SetIsDate(isDate bool) DateTime {
 	date.isDate = isDate
-	return date
+	return *date
 }
 
 func (date DateTime) IsDate() bool {

@@ -23,7 +23,6 @@ import (
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	crypto2 "github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/lib/crypto/aes"
-	"github.com/houyanzu/work-box/lib/mytime"
 	"github.com/houyanzu/work-box/lib/tron"
 	"github.com/houyanzu/work-box/tool/eth"
 	"github.com/shopspring/decimal"
@@ -162,17 +161,17 @@ func Transfer(chainDBID uint, limit int, module string) (err error) {
 		var status uint64
 		status, err = eth.GetTxStatus(chainDBID, pending.Data.Hash)
 		if err != nil {
-			exTime := pending.Data.CreateTime.Add(30 * time.Minute)
-			now := mytime.NewFromNow()
-			if exTime.Before(now) {
-				pending.SetFail()
-				if pending.Data.Type == 1 {
-					transferdetails.New(nil).Reset(pending.Data.ID)
-				} else if pending.Data.Type == 2 {
-					locktransferdetails.New(nil).Reset(pending.Data.ID)
-				}
-
-			}
+			//exTime := pending.Data.CreateTime.Add(30 * time.Minute)
+			//now := mytime.NewFromNow()
+			//if exTime.Before(now) {
+			//	pending.SetFail()
+			//	if pending.Data.Type == 1 {
+			//		transferdetails.New(nil).Reset(pending.Data.ID)
+			//	} else if pending.Data.Type == 2 {
+			//		locktransferdetails.New(nil).Reset(pending.Data.ID)
+			//	}
+			//
+			//}
 			return
 		}
 		//fmt.Println(status, "-------------")

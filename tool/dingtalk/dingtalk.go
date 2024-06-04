@@ -8,6 +8,9 @@ import (
 func Push(msg string) {
 	conf := config.GetConfig()
 	js := `{"msgtype":"text","text": {"content": "` + msg + `"}}`
+	if conf.Extra.DingTalkURL == "" {
+		return
+	}
 
 	_, _, _ = httptool.PostJSON(conf.Extra.DingTalkURL, []byte(js))
 }
