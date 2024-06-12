@@ -140,3 +140,8 @@ func (m *Model) Reset(transferId uint) bool {
 	}).Error
 	return true
 }
+
+func (m *Model) GetOneByTo(to string) *Model {
+	m.Db.Where("to = ?", strings.ToLower(to)).First(&m.Data)
+	return m
+}

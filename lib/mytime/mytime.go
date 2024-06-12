@@ -134,3 +134,8 @@ func (date DateTime) DiffDays(date2 DateTime) int {
 	d := date.data.Sub(date2.data)
 	return int(d.Hours() / 24)
 }
+
+func (date DateTime) UTC() DateTime {
+	date.data = date.data.UTC()
+	return date
+}
