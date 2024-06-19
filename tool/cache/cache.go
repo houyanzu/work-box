@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/houyanzu/work-box/config"
@@ -99,6 +100,46 @@ func GetString(key string) (string, error) {
 		return "", errors.New("wrong")
 	}
 	return string(resByte), nil
+}
+
+func GetByte(key string) (res []byte, err error) {
+	if prefix != "" {
+		key = prefix + key
+	}
+	if ca == nil {
+		panic("cache 未初始化")
+	}
+	res, ok := ca.Get(key).([]byte)
+	if !ok {
+		return nil, errors.New("wrong")
+	}
+	return
+}
+
+func GetObj[T any](key string) (res T, err error) {
+	if prefix != "" {
+		key = prefix + key
+	}
+
+	resByte, err := GetByte(key)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(resByte, &res)
+	return
+}
+
+func SetObj[T any](key string, value T, timeout int64) (err error) {
+	if prefix != "" {
+		key = prefix + key
+	}
+
+	js, err := json.Marshal(&value)
+	if err != nil {
+		return
+	}
+	err = Set(key, js, timeout)
+	return
 }
 
 func GetUint64(key string) (uint64, error) {

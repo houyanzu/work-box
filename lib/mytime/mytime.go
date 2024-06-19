@@ -100,6 +100,10 @@ func (date DateTime) Format() string {
 	return date.data.Format(layout)
 }
 
+func (date DateTime) DiyFormat(layout string) string {
+	return date.data.Format(layout)
+}
+
 func (date DateTime) Before(date2 DateTime) bool {
 	return date.data.Before(date2.data)
 }

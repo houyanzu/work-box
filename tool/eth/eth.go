@@ -575,6 +575,7 @@ func GetLogsByHash(chainDBID uint, hash string) (logs []*types.Log, err error) {
 			err = errr
 			return
 		}
+
 		logs = receipt.Logs
 	}
 	return
