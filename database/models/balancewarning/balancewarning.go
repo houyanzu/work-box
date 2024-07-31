@@ -10,6 +10,7 @@ type BoxBalanceWarning struct {
 	Address        string          `json:"address" gorm:"column:address"`
 	ChainDBID      uint            `json:"chain_db_id" gorm:"column:chain_db_id"`
 	Token          string          `json:"token" gorm:"column:token"`
+	Decimals       int32           `json:"decimals" gorm:"column:decimals"`
 	WarningBalance decimal.Decimal `json:"warning_balance" gorm:"column:warning_balance"`
 	Status         uint8           `json:"status" gorm:"column:status"`
 	Remark         string          `json:"remark" gorm:"column:remark"`

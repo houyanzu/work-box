@@ -28,7 +28,7 @@ func RunOnce() (err error) {
 		}
 		fmt.Println(balance, bw.Data.WarningBalance)
 		if balance.LessThan(bw.Data.WarningBalance) {
-			warnString += fmt.Sprintf("地址：%s，余额：%s，低于预警值：%s，备注：%s\n", bw.Data.Address, balance.String(), bw.Data.WarningBalance.String(), bw.Data.Remark)
+			warnString += fmt.Sprintf("地址：%s，余额：%s，低于预警值：%s，备注：%s\n", bw.Data.Address, balance.Div(decimal.New(1, bw.Data.Decimals)).String(), bw.Data.WarningBalance.Div(decimal.New(1, bw.Data.Decimals)).String(), bw.Data.Remark)
 		}
 		return
 	})
