@@ -50,6 +50,12 @@ func ApiMonitor(chainDBID uint, contract string, blockDiff uint64, eventID strin
 		return
 	}
 	endBlockNum := lastBlockNum + blockDiff
+	if endBlockNum > netLastNum {
+		endBlockNum = netLastNum - 20
+	}
+	if endBlockNum <= lastBlockNum+1 {
+		return
+	}
 
 	url := chain.Data.ApiHost +
 		"?module=logs&action=getLogs" +
