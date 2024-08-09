@@ -53,7 +53,7 @@ func ApiMonitor(chainDBID uint, contract string, blockDiff uint64, eventID strin
 	if endBlockNum > netLastNum {
 		endBlockNum = netLastNum - 20
 	}
-	if endBlockNum <= lastBlockNum+1 {
+	if endBlockNum < lastBlockNum+1 {
 		return
 	}
 
