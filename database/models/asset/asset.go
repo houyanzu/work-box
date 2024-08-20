@@ -283,6 +283,25 @@ func (m *Model) AddBalance(
 	return nil
 }
 
+func (m *Model) TransferBalance(
+	toUserID uint,
+	module string,
+	moduleId uint,
+	amount decimal.Decimal,
+	remark string,
+) error {
+	err := m.SubBalance(module, moduleId, amount, remark)
+	if err != nil {
+		return err
+	}
+	toAsset := NewFromUserIdAndTokenGroupId(m.MysqlContext, toUserID, m.Data.TokenGroupId)
+	err = toAsset.AddBalance(module, moduleId, amount, remark)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *Model) AddAndFreezeBalance(
 	module string,
 	moduleId uint,
