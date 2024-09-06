@@ -1,4 +1,4 @@
-package mylog
+package boxlog
 
 import (
 	"log"
