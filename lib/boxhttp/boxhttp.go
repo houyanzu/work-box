@@ -21,8 +21,10 @@ var client = &http.Client{
 
 // setHeaders sets custom headers to the request
 func setHeaders(req *http.Request, headers map[string]string) {
-	for k, v := range headers {
-		req.Header.Set(k, v)
+	if headers != nil {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
 	}
 }
 

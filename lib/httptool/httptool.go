@@ -13,6 +13,7 @@ import (
 var Header map[string]string
 
 // PostJSON .
+// Deprecated: Use boxhttp.PostJSON instead.
 func PostJSON(url string, js []byte) ([]byte, int, error) {
 	defer func() {
 		Header = nil
@@ -43,6 +44,7 @@ func PostJSON(url string, js []byte) ([]byte, int, error) {
 }
 
 // PostForm .
+// Deprecated: Use boxhttp.PostForm instead.
 func PostForm(url string, form url.Values) ([]byte, int, error) {
 	defer func() {
 		Header = nil
@@ -78,6 +80,7 @@ func PostForm(url string, form url.Values) ([]byte, int, error) {
 }
 
 // Get .
+// Deprecated: Use boxhttp.Get instead.
 func Get(url string, timeout time.Duration) ([]byte, int, error) {
 	defer func() {
 		Header = nil
