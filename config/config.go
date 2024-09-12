@@ -8,10 +8,11 @@ import (
 
 // DB .
 type Config struct {
-	Mysql mysqlConfig `json:"mysql"`
-	Redis redisConfig `json:"redis"`
-	Eth   ethConfig   `json:"eth"`
-	Extra extra       `json:"extra"`
+	Mysql    mysqlConfig `json:"mysql"`
+	Redis    redisConfig `json:"redis"`
+	Eth      ethConfig   `json:"eth"`
+	Extra    extra       `json:"extra"`
+	LogLevel string      `json:"log_level"`
 }
 
 type mysqlConfig struct {

@@ -2,9 +2,18 @@ package boxlog
 
 import (
 	"fmt"
+	"github.com/houyanzu/work-box/config"
 	"log"
 	"os"
 	"time"
+)
+
+const (
+	SILENT = iota
+	INFO
+	WARN
+	ERROR
+	DEBUG
 )
 
 var (
@@ -12,6 +21,7 @@ var (
 	logFile    *os.File
 	filePrefix string
 	showFile   bool
+	logLevel   int
 )
 
 // Init initializes the logger with a log file name prefix and an option to show file name and line number
@@ -23,6 +33,22 @@ func Init(logFileNamePrefix string, showFilename bool) error {
 		myLog = log.New(logFile, "", log.LstdFlags|log.Llongfile)
 	} else {
 		myLog = log.New(logFile, "", log.LstdFlags)
+	}
+
+	conf := config.GetConfig()
+	switch conf.LogLevel {
+	case "SILENT":
+		logLevel = SILENT
+	case "INFO":
+		logLevel = INFO
+	case "WARN":
+		logLevel = WARN
+	case "ERROR":
+		logLevel = ERROR
+	case "DEBUG":
+		logLevel = DEBUG
+	default:
+		logLevel = INFO
 	}
 
 	return nil
@@ -55,21 +81,33 @@ func rotateLogFile() error {
 
 // Debug logs a debug-level message with format
 func Debug(format string, args ...interface{}) {
+	if logLevel < DEBUG {
+		return
+	}
 	logWithPrefix("[DEBUG]", format, args...)
 }
 
 // Info logs an info-level message with format
 func Info(format string, args ...interface{}) {
+	if logLevel < INFO {
+		return
+	}
 	logWithPrefix("[INFO]", format, args...)
 }
 
 // Warn logs a warn-level message with format
 func Warn(format string, args ...interface{}) {
+	if logLevel < WARN {
+		return
+	}
 	logWithPrefix("[WARN]", format, args...)
 }
 
 // Error logs an error-level message with format
 func Error(format string, args ...interface{}) {
+	if logLevel < ERROR {
+		return
+	}
 	logWithPrefix("[ERROR]", format, args...)
 }
 
@@ -89,6 +127,9 @@ func logWithPrefix(prefix, format string, args ...interface{}) {
 	}
 
 	_ = myLog.Output(3, fullMessage)
+	if prefix == "[DEBUG]" {
+		fmt.Println(fullMessage)
+	}
 }
 
 // Close safely closes the log file
