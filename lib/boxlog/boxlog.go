@@ -11,8 +11,8 @@ import (
 const (
 	SILENT = iota
 	INFO
-	WARN
 	ERROR
+	WARN
 	DEBUG
 )
 

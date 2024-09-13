@@ -2,3 +2,5 @@
 config.json
 main.go
 go.sum
+*.log
+.vscode
