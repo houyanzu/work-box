@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/shopspring/decimal"
 	"io/ioutil"
 )
 
@@ -10,7 +9,6 @@ import (
 type Config struct {
 	Mysql    mysqlConfig `json:"mysql"`
 	Redis    redisConfig `json:"redis"`
-	Eth      ethConfig   `json:"eth"`
 	Extra    extra       `json:"extra"`
 	LogLevel string      `json:"log_level"`
 }
@@ -34,20 +32,9 @@ type redisConfig struct {
 	Prefix   string `json:"prefix"`
 }
 
-type ethConfig struct {
-	Host                  string `json:"host"`
-	WssHost               string `json:"wss_host"`
-	ApiHost               string `json:"api_host"`
-	ApiKey                string `json:"api_key"`
-	ChainId               int64  `json:"chain_id"`
-	MultiTransferContract string `json:"multi_transfer_contract"`
-	LockTransferContract  string `json:"lock_transfer_contract"`
-}
-
 type extra struct {
-	DingTalkURL       string          `json:"ding_talk_url"`
-	LoginExTime       int64           `json:"login_ex_time"`
-	UserKeyFeedAmount decimal.Decimal `json:"user_key_feed_amount"`
+	DingTalkURL string `json:"ding_talk_url"`
+	LoginExTime int64  `json:"login_ex_time"`
 }
 
 var internalConfig *Config

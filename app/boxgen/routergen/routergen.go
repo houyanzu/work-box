@@ -202,14 +202,14 @@ func inspectControllerMethods(node *ast.File, controllerName, key string) {
 			recvType := getReceiverType(funcDecl.Recv.List[0].Type)
 			if recvType == controllerName {
 				// 打印方法名
-				key = key + "." + funcDecl.Name.Name
+				hmk := key + "." + funcDecl.Name.Name
 
 				// 打印注解（注释）
 				if funcDecl.Doc != nil {
 					firstLine := funcDecl.Doc.List[0].Text
 					firstLineArr := strings.Split(firstLine, " ")
 					if len(firstLineArr) > 1 {
-						httpMethods[key] = firstLineArr[1]
+						httpMethods[hmk] = firstLineArr[1]
 					}
 				}
 			}
