@@ -131,8 +131,8 @@ func getMethods(methods string) (res []method, err error) {
 					res[k].Login = true
 				case "post":
 					res[k].HTTPMethod = "POST"
-				//case "get":
-				//	res[k].HTTPMethod = "GET"
+				case "get":
+					res[k].HTTPMethod = "GET"
 				default:
 					err = fmt.Errorf("invalid method: %s", v)
 					return

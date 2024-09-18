@@ -49,7 +49,7 @@ func AutoRegisterRoutes(router *gin.Engine, controller interface{}) {
 	controllerValue := reflect.ValueOf(controller)
 
 	// 获取基础路由前缀
-	baseRoute := buildBaseRoute(controllerType)
+	baseRoute, pkgPath := buildBaseRoute(controllerType)
 
 	// 遍历控制器的所有方法并注册路由
 	for i := 0; i < controllerType.NumMethod(); i++ {
@@ -66,29 +66,57 @@ func AutoRegisterRoutes(router *gin.Engine, controller interface{}) {
 			continue
 		}
 
+		key := pkgPath+"."+controllerType.Name()+"."+method.Name
+		httpMethod := MethodTags[key]
 		// 注册方法为 Gin 的 Post 路由
 		route := fmt.Sprintf("api/%s/%s", baseRoute, methodName)
 		switch numIn {
 		case 2:
-			router.POST(route, func(ctx *gin.Context) {
-				method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx)})
-			})
+			switch httpMethod {
+			case "POST":
+				router.POST(route, func(ctx *gin.Context) {
+					method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx)})
+				})
+			case "GET":
+				router.GET(route, func(ctx *gin.Context) {
+					method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx)})
+				})
+			default:
+				router.POST(route, func(ctx *gin.Context) {
+					method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx)})
+				})
+			}
 
 		case 3:
 			secondParamType := getParamTypeName(methodType.In(2))
 			if secondParamType == "uint" {
-				router.POST(route, middleware.Login(), func(ctx *gin.Context) {
-					userID := middleware.GetUserId(ctx)
-					method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx), reflect.ValueOf(userID)})
-				})
+				switch httpMethod {
+				case "POST":
+					router.POST(route, middleware.Login(), func(ctx *gin.Context) {
+						userID := middleware.GetUserId(ctx)
+						method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx), reflect.ValueOf(userID)})
+					})
+				case "GET":
+					router.GET(route, middleware.Login(), func(ctx *gin.Context) {
+						userID := middleware.GetUserId(ctx)
+						method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx), reflect.ValueOf(userID)})
+					})
+				default:
+					router.POST(route, middleware.Login(), func(ctx *gin.Context) {
+						userID := middleware.GetUserId(ctx)
+						method.Func.Call([]reflect.Value{controllerValue, reflect.ValueOf(ctx), reflect.ValueOf(userID)})
+					})
+				}
+
 			}
 		}
 
 	}
 }
 
+
 // 构建控制器的基础路由前缀
-func buildBaseRoute(controllerType reflect.Type) string {
+func buildBaseRoute(controllerType reflect.Type) (string, string) {
 	// 解析包路径
 	pkgPath := controllerType.PkgPath()
 	pkgParts := strings.Split(pkgPath, "/")
@@ -113,7 +141,7 @@ func buildBaseRoute(controllerType reflect.Type) string {
 	controllerName := getControllerRouterName(controllerType.Name())
 	routeBuilder.WriteString(controllerName)
 
-	return routeBuilder.String()
+	return routeBuilder.String(), pkgPath
 }
 
 // 去掉字符串末尾的 "Controller" 并将首字母变为小写
