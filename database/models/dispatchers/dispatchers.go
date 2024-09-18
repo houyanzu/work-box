@@ -87,6 +87,7 @@ func (m *Model) CreateKeys(count int, password string, en crypto.Encoder) {
 
 		en.SetString(priKey)
 		de := en.Encode([]byte(password))
+		m = New(nil)
 		m.Data.Addr = strings.ToLower(addr)
 		m.Data.PriKey = de
 		m.Add()
@@ -119,6 +120,10 @@ func (m *Model) SetFree(minBalance decimal.Decimal) {
 	m.Db.Model(&m.Data).Update("status", 0)
 }
 
+func (m *Model) SetNeedFeed() {
+	m.Db.Model(&m.Data).Update("status", -1)
+}
+
 func (m *Model) SetBusy() {
 	m.Db.Model(&m.Data).Update("status", 1)
 }
@@ -141,4 +146,13 @@ func (m *Model) SetNeedFeedByFeedId(feedId uint) {
 
 func (m *Model) Exists() bool {
 	return m.Data.ID > 0
+}
+
+func (m *Model) Foreach(f func(key int, value *Model) bool) {
+	for i, v := range m.List {
+		if f(i, &Model{m.MysqlContext, v, nil, 0}) {
+			break
+		}
+	}
+
 }

@@ -75,3 +75,12 @@ func (m *Model) InitPendingList() *Model {
 	m.Db.Where("status = 1").Find(&m.List)
 	return m
 }
+
+func (m *Model) Foreach(f func(key int, value *Model) bool) {
+	for i, v := range m.List {
+		if f(i, &Model{m.MysqlContext, v, nil, 0}) {
+			break
+		}
+	}
+
+}
