@@ -37,3 +37,12 @@ func CopyMatchingFields(dest, src interface{}) error {
 
 	return nil
 }
+
+func InSlice[T comparable](el T, s []T) bool {
+	for _, v := range s {
+		if el == v {
+			return true
+		}
+	}
+	return false
+}

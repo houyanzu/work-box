@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"exchange_pro/lib/tool"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/houyanzu/work-box/config"
+	"github.com/houyanzu/work-box/lib/output"
+	"github.com/houyanzu/work-box/lib/toolfunc"
 	"github.com/houyanzu/work-box/tool/cache"
 	"sync"
-	"tang/lib/output"
 )
 
 var mu = sync.Mutex{}
@@ -23,11 +23,11 @@ func ipFilterHandler(c *gin.Context) {
 		return
 	}
 	clientIP := c.ClientIP()
-	if tool.InSlice(clientIP, conf.IPFilter.WhiteList) {
+	if toolfunc.InSlice(clientIP, conf.IPFilter.WhiteList) {
 		c.Next()
 		return
 	}
-	if tool.InSlice(clientIP, conf.IPFilter.BlackList) {
+	if toolfunc.InSlice(clientIP, conf.IPFilter.BlackList) {
 		output.NewOutput(c, 0, nil).Out()
 		c.Abort()
 		return
