@@ -32,31 +32,6 @@ func ipFilterHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	for _, rule := range conf.IPFilter.Rules {
-		if !rule.Enable {
-			continue
-		}
-		if rule.Duration == 0 {
-			continue
-		}
-		key := fmt.Sprintf("ip_filter_%s_%s_times", rule.Module, clientIP)
-		if !cache.IsExist(key) {
-			func() {
-				mu.Lock()
-				defer mu.Unlock()
-				if !cache.IsExist(key) {
-					_ = cache.Set(key, 1, rule.Duration)
-				}
-			}()
-		}
-		times, _ := cache.GetInt64(key)
-		if times > rule.Threshold {
-			output.NewOutput(c, 0, nil).Out()
-			c.Abort()
-			return
-		}
-		_ = cache.IncrValue(key, 1)
-	}
 
 	perpetualKey := fmt.Sprintf("ip_filter_%s_%s", "perpetual", clientIP)
 	if cache.IsExist(perpetualKey) {
@@ -83,6 +58,32 @@ func ipFilterHandler(c *gin.Context) {
 		return
 	}
 	_ = cache.IncrValue(perpetualTimesKey, 1)
+
+	for _, rule := range conf.IPFilter.Rules {
+		if !rule.Enable {
+			continue
+		}
+		if rule.Duration == 0 {
+			continue
+		}
+		key := fmt.Sprintf("ip_filter_%s_%s_times", rule.Module, clientIP)
+		if !cache.IsExist(key) {
+			func() {
+				mu.Lock()
+				defer mu.Unlock()
+				if !cache.IsExist(key) {
+					_ = cache.Set(key, 1, rule.Duration)
+				}
+			}()
+		}
+		times, _ := cache.GetInt64(key)
+		if times > rule.Threshold {
+			output.NewOutput(c, 0, nil).Out()
+			c.Abort()
+			return
+		}
+		_ = cache.IncrValue(key, 1)
+	}
 
 	if !conf.IPFilter.TokenFilter {
 		c.Next()
