@@ -61,8 +61,11 @@ func Monitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, e
 	if err != nil {
 		return
 	}
-	netLastNum := header.Number.Uint64()
+	netLastNum := header.Number.Uint64() - 20
 	endBlockNum := lastBlockNum + blockDiff
+	if endBlockNum > netLastNum {
+		endBlockNum = netLastNum
+	}
 
 	contractAddress := common.HexToAddress(contract)
 	query := ethereum.FilterQuery{
@@ -101,7 +104,7 @@ func (e EventLog) Foreach(f func(index int, log types.Log, chainRecordId uint)) 
 		have = true
 	}
 	if !have {
-		if e.endBlockNum <= e.netLastNum {
+		if e.endBlockNum < e.netLastNum {
 			record := chainrecord.New(nil)
 			record.Data.Contract = e.contract
 			record.Data.BlockNum = e.endBlockNum

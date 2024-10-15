@@ -84,7 +84,7 @@ func (m *Model) Add() {
 }
 
 func (m *Model) Save() {
-	m.Db.Save(&m.Data)
+	m.Error = m.Db.Save(&m.Data).Error
 }
 
 func (m *Model) InitByData(data BoxTokens) *Model {
