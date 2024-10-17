@@ -6,8 +6,9 @@ require (
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/fbsobreira/gotron-sdk v0.0.0-20221101181131-c4daceb828f0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/houyanzu/cache v0.0.0-20231204110848-d2ae86e523ad
+	github.com/houyanzu/cache v1.0.0
 	github.com/shopspring/decimal v1.3.1
+	golang.org/x/crypto v0.9.0
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.30.0
 	gorm.io/driver/mysql v1.4.3
@@ -60,7 +61,6 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
