@@ -63,6 +63,11 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
+func (m *Model) InitByID(ID uint) *Model {
+	m.Db.Take(&m.Data, ID)
+	return m
+}
+
 func (m *Model) GetNeedFeedList() *Model {
 	m.Db.Where("status = -1").Find(&m.List)
 	return m
