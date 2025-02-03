@@ -49,6 +49,7 @@ func Monitor(chainDBID uint, contract string, blockDiff uint64) (res EventLog, e
 		if lastBlockNum, ok = initBlock[chainDBID][contract]; ok {
 			record := chainrecord.New(nil)
 			record.Data.Contract = contract
+			record.Data.ChainDbId = chainDBID
 			record.Data.BlockNum = lastBlockNum
 			record.Data.EventId = ""
 			record.Data.Hash = ""
