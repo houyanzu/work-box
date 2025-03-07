@@ -49,7 +49,7 @@ func Base64StrDecode(text string) string {
 	return string(res)
 }
 
-func fileSHA256(path string) (string, error) {
+func FileSHA256(path string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return "", err
