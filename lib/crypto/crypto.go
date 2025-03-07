@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
 )
 
 type Decoder interface {
@@ -46,4 +47,19 @@ func Base64StrEncode(text string) string {
 func Base64StrDecode(text string) string {
 	res, _ := base64.StdEncoding.DecodeString(text)
 	return string(res)
+}
+
+func fileSHA256(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }
