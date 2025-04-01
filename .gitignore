@@ -1,4 +1,5 @@
 .idea
+app/test
 config.json
 go.sum
 *.log
