@@ -27,9 +27,8 @@ var msgMap map[ErrorCode]map[string]string
 func InitMsgMap(msgMap_ map[ErrorCode]map[string]string) {
 	if msgMap_ == nil {
 		msgMap = make(map[ErrorCode]map[string]string)
-	} else {
-		msgMap = msgMap_
 	}
+	msgMap = msgMap_
 }
 
 // NewOutput 创建一个新的 Output 实例
