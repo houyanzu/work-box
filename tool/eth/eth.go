@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	tronClient "github.com/fbsobreira/gotron-sdk/pkg/client"
 	"github.com/houyanzu/work-box/database/models/chains"
+	"github.com/houyanzu/work-box/lib/contract/mintburntoken"
 	"github.com/houyanzu/work-box/lib/contract/standardcoin"
 	"github.com/houyanzu/work-box/lib/contract/unipair"
 	"github.com/houyanzu/work-box/lib/httptool"
@@ -138,6 +139,23 @@ func (ca *ClientAuth) Approve(token string, spender string, value decimal.Decima
 		return
 	}
 
+	return tx.Hash().Hex(), nil
+}
+
+func (ca *ClientAuth) MultiMint(token common.Address, tos []common.Address, amounts []decimal.Decimal) (hash string, err error) {
+	tokenCon, err := mintburntoken.NewMintburntoken(token, ca.Client)
+	if err != nil {
+		return
+	}
+	amountsBig := make([]*big.Int, len(amounts))
+	for i, v := range amounts {
+		amountsBig[i] = v.BigInt()
+	}
+
+	tx, err := tokenCon.MultiMint(ca.Auth, tos, amountsBig)
+	if err != nil {
+		return
+	}
 	return tx.Hash().Hex(), nil
 }
 
