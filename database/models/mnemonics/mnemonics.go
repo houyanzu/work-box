@@ -1,6 +1,7 @@
 package mnemonics
 
 import (
+	"errors"
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/lib/mnemonic"
@@ -64,8 +65,11 @@ func (m *Model) InitByID(ID uint) *Model {
 }
 
 func (m *Model) GetWords(password []byte, de crypto.Decoder) (priKey string) {
-	de.SetBytes(m.Data.Words)
+	var temp []byte
+	copy(temp, m.Data.Words)
+	de.SetBytes(temp)
 	en := de.Decode(password)
+
 	return en
 }
 
@@ -75,12 +79,11 @@ func (m *Model) DecodeWords(password []byte, de crypto.Decoder) {
 	m.Decoded = true
 }
 
-func (m *Model) GetAddressAndPriKeyByIndex(index int, password []byte, de crypto.Decoder) (address string, priKey string, err error) {
-	words := string(m.Data.Words)
+func (m *Model) GetAddressAndPriKeyByIndex(index int) (address string, priKey string, err error) {
 	if !m.Decoded {
-		words = m.GetWords(password, de)
+		return "", "", errors.New("please decode words first")
 	}
-	mn, err := mnemonic.NewMnemonic(words)
+	mn, err := mnemonic.NewMnemonic(string(m.Data.Words))
 	if err != nil {
 		return "", "", err
 	}

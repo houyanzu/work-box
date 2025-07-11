@@ -44,6 +44,9 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 	c.Set("userId", userId)
+	conf := config.GetConfig()
+	cache.Set(token, userId, conf.Extra.LoginExTime)
+	cache.Set(token+"_address", strings.ToLower(account), conf.Extra.LoginExTime)
 	c.Next()
 	return
 }
