@@ -2,6 +2,7 @@ package mnemonics
 
 import (
 	"errors"
+
 	"github.com/houyanzu/work-box/database"
 	"github.com/houyanzu/work-box/lib/crypto"
 	"github.com/houyanzu/work-box/lib/mnemonic"
@@ -65,7 +66,7 @@ func (m *Model) InitByID(ID uint) *Model {
 }
 
 func (m *Model) GetWords(password []byte, de crypto.Decoder) (priKey string) {
-	var temp []byte
+	temp := make([]byte, len(m.Data.Words))
 	copy(temp, m.Data.Words)
 	de.SetBytes(temp)
 	en := de.Decode(password)

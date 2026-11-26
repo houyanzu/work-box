@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Mysql    mysqlConfig `json:"mysql"`
 	Redis    redisConfig `json:"redis"`
+	Eth      ethConfig   `json:"eth"`
 	IPFilter ipFilter    `json:"ip_filter"`
 	Extra    extra       `json:"extra"`
 	LogLevel string      `json:"log_level"`
@@ -31,6 +32,15 @@ type redisConfig struct {
 	Port     string `json:"port"`
 	Db       int    `json:"db"`
 	Prefix   string `json:"prefix"`
+}
+
+type ethConfig struct {
+	Host                  string `json:"host"`
+	ApiHost               string `json:"api_host"`
+	ApiKey                string `json:"api_key"`
+	ChainId               int64  `json:"chain_id"`
+	MultiTransferContract string `json:"multi_transfer_contract"`
+	LockTransferContract  string `json:"lock_transfer_contract"`
 }
 
 type ipFilter struct {
